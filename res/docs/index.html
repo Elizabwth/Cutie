@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+ <html>
+	<head>
+		<title>Cutie</title>
+		<!-- Adblock for YouTube http://userscripts.org/scripts/show/136519 -->
+		<script type="text/javascript" src="http://www.youtube.com/player_api"></script>
+		<script type="text/javascript"> 
+			var player;
+
+			function onYouTubePlayerAPIReady() {
+			 	player = new YT.Player('embDiv', {
+					height: '100%',
+					width: '100%',
+					//videoId: 'u1zgFlCw8Aw',
+			   		playerVars: { 'autoplay': 1 , 
+			   					  'iv_load_policy': 3, // disables annotations
+			   					  'rel': 0,
+			   					  'theme':'light'
+			   					  //'color':'white'
+			   					}, 
+					events: {
+						'onReady' : onPlayerReady,
+						'onStateChange': onPlayerStateChange,
+						'onError' : onPlayerError
+					}
+				});
+				
+			}
+
+			function onPlayerReady(event) {
+				console.log('Player is ready.');
+				console.log(player.getPlayerState());
+
+				// get the current time every second
+				window.setInterval(getCurrentTime, 1000); 
+				
+				player.setPlaybackQuality('small'); // DISABLE WHEN NOT TESTING
+			}
+
+			function showVideo(vid) {
+				player.clearVideo();
+				console.log(vid);
+				player.cueVideoById(vid);
+				player.playVideo();
+			}
+
+			function clearVideo() {
+				console.log("Clearing video.");
+				player.stopVideo();
+				player.clearVideo();
+			}
+		
+			function onPlayerError(event) {
+			 	main.video_over();		
+			}     
+		
+			function onPlayerStateChange(event) {
+			    if (event.data == YT.PlayerState.ENDED) {
+			    	console.log("ENDED");
+			 		main.video_over();
+			    } else if (event.data == YT.PlayerState.PLAYING) {
+			    	getCurrentTime();
+			    	getCurrentURL();
+			 		main.video_playing();
+			    } else if (event.data == YT.PlayerState.PAUSED) {
+			    	getCurrentTime();
+			    	getCurrentURL();
+			 		main.video_paused();
+			    } else if (event.data == YT.PlayerState.BUFFERING) {
+			    	getCurrentTime();
+			    	getCurrentURL();
+			 		main.video_buffering();
+			    } else if (event.data == YT.PlayerState.CUED) {
+			 		main.video_cued();
+			    }
+			}
+		
+			function stopVideo() {
+				player.stopVideo();
+			}
+		
+			function seekTo(sec, seekAhead) {
+				player.seekTo(sec, seekAhead);
+			}
+		
+			function getCurrentTime() {
+				// console.log(player.getVideoUrl());
+
+				console.log(player.getCurrentTime());
+				main.curTime(player.getCurrentTime());
+			}
+			function getCurrentURL() {
+				main.curURL(player.getVideoUrl());
+			}
+			
+		</script>
+	</head>
+
+	<body style="padding:0px;margin:0;width:100%px;height:100%px;">
+		<div id="embDiv" style="padding:0px;margin:0px;margin-bottom:-5px;"></div>	
+	</body>
+</html>

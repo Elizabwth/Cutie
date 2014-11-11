@@ -1,0 +1,53 @@
+{"users":
+	[
+		{
+			"name":		"Lizzy",
+			"power":	"admin"
+		},
+		{
+			"name":		"Dizzy",
+			"power":	"user"
+		}
+	]
+}
+
+{"sync":
+	{
+	 	"id":		"BfaUUcDKkKc",
+		"state":	"playing",
+		"time":		0
+	}
+}
+
+{"queue":
+	[
+		{
+			"source":	"youtube",
+			"id":		"A1VluhCYw1A",
+			"status":	"current"
+		},
+		{
+			"source":	"youtube",
+			"id":		"fGx6fogeuLo",
+			"status":	"queued"
+		},
+		{
+			"source":	"youtube",
+			"id":		"R4xrLKb6oFI",
+			"status":	"queued"
+		}
+	]
+}
+
+{"join_request":
+	{
+		"name":"Mizzy"
+	}
+}
+
+{"chat":
+	{
+		"user":"Lizzy",
+		"message":"lol"
+	}
+}
