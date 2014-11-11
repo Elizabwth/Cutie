@@ -3,8 +3,8 @@ Cutie
 
 YouTube sync for multiple clients with a GUI 
 
-Requires: 
-=========
+##### Requires: 
+
 PyQt4
 
 gdata
