@@ -45,12 +45,12 @@ class CutieServer(QtCore.QThread):
             ct.start()
             self.client_threads.append(ct)
 
-            time.sleep(.05)
+            time.sleep(0.05)
 
             print "Current users connected: "+str(len(self.client_threads))
 
     def disconnect_client(self, thread):
-        print "Popping thread ("+thread.name+")"
+        print "Popping Cutie ClientThread with address "+str(thread.address[0])
         self.client_threads.remove(thread)
 
     def broadcast_chat(self, message):
