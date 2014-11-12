@@ -113,9 +113,12 @@ class MainForm(QtGui.QWidget):
 
         self.ui.addVideo.clicked.connect(self.add_to_queue)
         self.ui.videoLineURL.returnPressed.connect(self.add_to_queue)
-
         self.ui.voteSkip.clicked.connect(self.get_current_time_and_state)
+
         self.ui.ytQueue.doubleClicked.connect(self.playlist_play_index)
+        self.ui.ytQueue.setDragDropMode(QtGui.QAbstractItemView.InternalMove)
+        self.ui.ytQueue.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.ui.ytQueue.customContextMenuRequested.connect(self.openQueueContextMenu)
 
         self.ui.chatBoxInput.returnPressed.connect(self.send_chat_message)
 
@@ -137,6 +140,29 @@ class MainForm(QtGui.QWidget):
 
     def web_loadFinished(self):
         self.ui.ytWebView.page().mainFrame().addToJavaScriptWindowObject('main', self.player)
+
+    # ----- START CONTEXT MENU FUNCTIONS -----
+    def openQueueContextMenu(self, position):
+        # don't display context menu if list is empty
+        if len(self.ui.ytQueue)==0: 
+            return
+
+        menu         = QtGui.QMenu(self.ui.ytQueue)
+        removeAction = menu.addAction("Remove from queue")
+        copyAction   = menu.addAction("Copy URL to clipboard")
+        action       = menu.exec_(self.ui.ytQueue.mapToGlobal(position))
+
+        if action == removeAction:
+            item = self.ui.ytQueue.currentItem()
+            self.ui.ytQueue.takeItem(self.ui.ytQueue.row(item))
+            del item
+        elif action == copyAction:
+            item_id = self.ui.ytQueue.currentItem().ytID
+            clipboard = QtGui.QApplication.clipboard()
+            clipboard.clear(mode=clipboard.Clipboard)
+            clipboard.setText("https://www.youtube.com/watch?v="+item_id, mode=clipboard.Clipboard)
+
+    # ----- END CONTEXT MENU FUNCTIONS -----
 
     # ----- START CLIENT/SERVER FUNCTIONS -----
     def connect_to_server(self):
@@ -212,10 +238,12 @@ class MainForm(QtGui.QWidget):
         if self.ui.ytQueue.count() == 0 or self.player.state == 0:
             self.play_video(vid_code)
 
-        self.ui.ytQueue.addItem(Video(vid_code))
+        listItem = Video(vid_code)
+
+        self.ui.ytQueue.addItem(listItem)
         self.ui.ytQueue.scrollToBottom()
 
-        #threading.Thread(target=self.scroll_up_delay).start()
+        threading.Thread(target=self.scroll_up_delay).start()
 
         self.ui.ytQueue.reset()
         self.ui.videoLineURL.clear()
