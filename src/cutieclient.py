@@ -13,9 +13,6 @@ from utils import *
 class VidUpdateSignal(QtCore.QObject):
     sig = QtCore.pyqtSignal(str,float,int)
 
-class QueueSignal(QtCore.QObject):
-    sig = QtCore.pyqtSignal(list)
-
 class ChatSignal(QtCore.QObject):
     sig = QtCore.pyqtSignal(str)
 
@@ -35,7 +32,6 @@ class CutieClient(QtCore.QThread):
 
         self.vid_update_signal  = VidUpdateSignal()
         self.chat_signal        = ChatSignal()
-        self.queue_signal       = QueueSignal()
 
     def run(self):
         while True:
@@ -68,18 +64,12 @@ class CutieClient(QtCore.QThread):
             state = result["sync"]["state"]
             self.vid_update_signal.sig.emit(vid_id, time, state)
 
-    def queue_handle():
-        if data.startswith('{"queue":'):
-            result = json.loads(data)
-            queue = result["queue"]
-            self.queue_signal.sig.emit(queue)
-
     def send_chat(self, message):
         data = '{"chat":{"name":"'+self.name+'","message":"'+message+'"}}'
         self.clientsocket.send(data)
 
 if __name__ == '__main__':
-    cc = CutieClient('localhost', 'Lizzy')
+    cc = CutieClient('localhost', 'Lizzy', 'a')
     cc.start()
     while True:
         pass
