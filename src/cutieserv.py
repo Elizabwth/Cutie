@@ -67,8 +67,6 @@ class ClientThread(QtCore.QThread):
 
         self.socket     = socket
         self.address    = address
-        self.power = ''
-        self.name  = ''
 
         self.serv = None
 
