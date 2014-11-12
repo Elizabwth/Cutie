@@ -69,7 +69,7 @@ class CutieClient(QtCore.QThread):
         self.clientsocket.send(data)
 
 if __name__ == '__main__':
-    cc = CutieClient('localhost', 'Lizzy', 'a')
+    cc = CutieClient('localhost', 'Lizzy')
     cc.start()
     while True:
         pass
