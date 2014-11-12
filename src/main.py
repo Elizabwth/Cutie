@@ -135,6 +135,7 @@ class MainForm(QtGui.QWidget):
         self.client.start()
         self.client.vid_update_signal.sig.connect(self.client_state)
         self.client.chat_signal.sig.connect(self.update_chat)
+        self.client.queue_signal.sig.connect(self.update_queue)
 
         self.chat_text = ''
 
@@ -227,6 +228,10 @@ class MainForm(QtGui.QWidget):
         self.play_video(self.ui.ytQueue.item(idx.row()).ytID)
         self.ui.ytQueue.item(self.current_idx).setSelected(True)
 
+    # ----- QUEUE FUNCTIONS -----
+    def send_queue_to_server(self):
+        pass
+
     def add_to_queue(self):
         """Adds url to the playlist"""
         url = self.ui.videoLineURL.text()
@@ -239,7 +244,6 @@ class MainForm(QtGui.QWidget):
             self.play_video(vid_code)
 
         listItem = Video(vid_code)
-
         self.ui.ytQueue.addItem(listItem)
         self.ui.ytQueue.scrollToBottom()
 

@@ -22,19 +22,13 @@
 {"queue":
 	[
 		{
-			"source":	"youtube",
-			"id":		"A1VluhCYw1A",
-			"status":	"current"
+			"id":		"A1VluhCYw1A"
 		},
 		{
-			"source":	"youtube",
-			"id":		"fGx6fogeuLo",
-			"status":	"queued"
+			"id":		"fGx6fogeuLo"
 		},
 		{
-			"source":	"youtube",
-			"id":		"R4xrLKb6oFI",
-			"status":	"queued"
+			"id":		"R4xrLKb6oFI"
 		}
 	]
 }
