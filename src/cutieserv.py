@@ -10,19 +10,6 @@ from PyQt4 import QtCore
 
 from utils import *
 
-
-class OnJoinSignal(QtCore.QObject):
-    sig = QtCore.pyqtSignal(str)
-
-class BroadcastChatSignal(QtCore.QObject):
-    sig = QtCore.pyqtSignal(str)
-
-class BroadcastQueueSignal(QtCore.QObject):
-    sig = QtCore.pyqtSignal(str)
-
-class BroadcastUsersSignal(QtCore.QObject):
-    sig = QtCore.pyqtSignal(str)
-
 class CutieServer(QtCore.QThread):
     def __init__(self, parent=None):
         QtCore.QThread.__init__(self, parent)
@@ -40,9 +27,6 @@ class CutieServer(QtCore.QThread):
 
         self.queue = []
         self.users = []
-
-        self.broadcast_chat_signal = BroadcastChatSignal()
-        self.broadcast_queue_signal = BroadcastQueueSignal()
 
     def run(self):
         while 1:
