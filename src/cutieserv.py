@@ -20,6 +20,9 @@ class BroadcastChatSignal(QtCore.QObject):
 class BroadcastQueueSignal(QtCore.QObject):
     sig = QtCore.pyqtSignal(str)
 
+class BroadcastUsersSignal(QtCore.QObject):
+    sig = QtCore.pyqtSignal(str)
+
 class CutieServer(QtCore.QThread):
     def __init__(self, parent=None):
         QtCore.QThread.__init__(self, parent)
@@ -57,7 +60,7 @@ class CutieServer(QtCore.QThread):
             print "Current users connected: "+str(len(self.client_threads))
 
     def disconnect_client(self, thread):
-        print "Popping Cutie ClientThread with address "+str(thread.address[0])
+        print "Disconnecting user ("+thread.name+") with address "+str(thread.address[0])+" and popping thread"
         self.client_threads.remove(thread)
 
     def broadcast_chat(self, message):
@@ -65,7 +68,8 @@ class CutieServer(QtCore.QThread):
             thread.send_message_to_client(message)
 
     def broadcast_connected_users(self, users):
-        pass
+        for thread in self.client_threads:
+            thread.send_users_to_client(users)
 
     def broadcast_queue(self, queue):
         pass
@@ -78,6 +82,8 @@ class ClientThread(QtCore.QThread):
         self.socket = socket
         self.address = address
 
+        self.name = ""
+
         self.serv = None
 
     def run(self):
@@ -88,7 +94,11 @@ class ClientThread(QtCore.QThread):
             except:
                 data = 'None'
                 self.serv.disconnect_client(self)
-                print("Disconnected "+self.address[0]+" ("+self.name+") from server.")
+
+            # handle setting of user name
+            if data.startswith('{"join_request"'):
+                result = json.loads(data)
+                self.name = result["join_request"]["name"]
 
             # handle incoming chats
             if data.startswith('{"chat"'):
@@ -97,9 +107,7 @@ class ClientThread(QtCore.QThread):
             if not data or data == 'None':
                 break
             else:
-                #print data
-                msg = "(ClientThread) recv: %s" % data
-                self.socket.send(msg)
+                print "(ClientThread) recv: %s" % data
     
         self.socket.close()
 
@@ -107,6 +115,9 @@ class ClientThread(QtCore.QThread):
         self.socket.send(message)
 
     def send_queue_to_client(self, queue):
+        self.socket.send(message)
+
+    def send_users_to_client(self, users):
         self.socket.send(message)
 
     def request_queue(self):
