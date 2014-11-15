@@ -20,11 +20,10 @@ class QueueSignal(QtCore.QObject):
     sig = QtCore.pyqtSignal(list)
 
 class CutieClient(QtCore.QThread):
-    def __init__(self, host, name, parent=None):
+    def __init__(self, host, port, name, parent=None):
         QtCore.QThread.__init__(self, parent)
         self.name = name
 
-        port = 55567
         addr = (host, port)
     
         self.clientsocket = socket(AF_INET, SOCK_STREAM)

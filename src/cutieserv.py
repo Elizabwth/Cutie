@@ -17,6 +17,9 @@ class OnJoinSignal(QtCore.QObject):
 class BroadcastChatSignal(QtCore.QObject):
     sig = QtCore.pyqtSignal(str)
 
+class BroadcastQueueSignal(QtCore.QObject):
+    sig = QtCore.pyqtSignal(str)
+
 class CutieServer(QtCore.QThread):
     def __init__(self, parent=None):
         QtCore.QThread.__init__(self, parent)
@@ -32,7 +35,11 @@ class CutieServer(QtCore.QThread):
 
         self.client_threads = []
 
+        self.queue = []
+        self.users = []
+
         self.broadcast_chat_signal = BroadcastChatSignal()
+        self.broadcast_queue_signal = BroadcastQueueSignal()
 
     def run(self):
         while 1:
@@ -55,9 +62,12 @@ class CutieServer(QtCore.QThread):
 
     def broadcast_chat(self, message):
         for thread in self.client_threads:
-            thread.send_chat(message)
+            thread.send_message_to_client(message)
 
-    def broadcast_connected_users(self, user_packet):
+    def broadcast_connected_users(self, users):
+        pass
+
+    def broadcast_queue(self, queue):
         pass
 
 
@@ -65,8 +75,8 @@ class ClientThread(QtCore.QThread):
     def __init__(self, socket, address, parent=None):
         QtCore.QThread.__init__(self, parent)
 
-        self.socket     = socket
-        self.address    = address
+        self.socket = socket
+        self.address = address
 
         self.serv = None
 
@@ -74,6 +84,7 @@ class ClientThread(QtCore.QThread):
         while 1:
             try:
                 data = self.socket.recv(1024)
+                data = data.replace("\x00", "") # remove null bytes
             except:
                 data = 'None'
                 self.serv.disconnect_client(self)
@@ -87,13 +98,19 @@ class ClientThread(QtCore.QThread):
                 break
             else:
                 #print data
-                msg = "You sent me: %s" % data
+                msg = "(ClientThread) recv: %s" % data
                 self.socket.send(msg)
     
         self.socket.close()
 
-    def send_chat(self, message):
+    def send_message_to_client(self, message):
         self.socket.send(message)
+
+    def send_queue_to_client(self, queue):
+        self.socket.send(message)
+
+    def request_queue(self):
+        self.socket.send('{"queue_request"}')
 
 if __name__ == "__main__":
     cs = CutieServer()

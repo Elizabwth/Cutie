@@ -9,6 +9,10 @@ import gdata.youtube.service
 from qtui import Ui_MainDialog
 
 from utils import *
+from joindialog import *
+from player import Player
+import cutieclient
+import cutieserv
 
 class User(QtGui.QListWidgetItem):
     def __init__(self, user_name, parent=None):
@@ -20,7 +24,7 @@ class User(QtGui.QListWidgetItem):
 class Video(QtGui.QListWidgetItem):
     def __init__(self, text, parent=None):
         self.ytID = text
-        # https://developers.google.com/youtube/1.0/developers_guide_python?csw=1
+        
         super(Video, self).__init__('', parent)
 
         self.setText('Retreiving title of "'+text+'."')
@@ -29,6 +33,7 @@ class Video(QtGui.QListWidgetItem):
 
     def set_video_title(self):
         try:
+            # https://developers.google.com/youtube/1.0/developers_guide_python?csw=1
             yt_service  = gdata.youtube.service.YouTubeService()
             entry       = yt_service.GetYouTubeVideoEntry(video_id=self.ytID)
             title       = entry.media.title.text
@@ -38,61 +43,9 @@ class Video(QtGui.QListWidgetItem):
             self.setText(text)
             self.setToolTip(text+"\nAdded by %s." % ("Lizzy"))
         except:
-            self.setText("Retrying...")
+            self.setText("Retrying to retreive title...")
             self.t1 = threading.Thread(target=self.set_video_title)
             self.t1.start()
-        
-# from: http://mspadaru.wordpress.com/2012/08/18/intro/
-class Player(QtCore.QObject):
-    def __init__(self, parent=None):
-        super(Player, self).__init__(parent) 
-        self.state  = -1
-        self.time   = 0.00
-        self.ID     = ''
-
-    videoOver       = QtCore.pyqtSignal()
-    videoPlaying    = QtCore.pyqtSignal()
-    videoPaused     = QtCore.pyqtSignal()
-    videoBuffering  = QtCore.pyqtSignal()
-    videoCued       = QtCore.pyqtSignal()
-
-    @QtCore.pyqtSlot()
-    def video_over(self):
-        self.state = 0
-        self.videoOver.emit()
-        print "Video is over."
-    @QtCore.pyqtSlot()
-    def video_playing(self):
-        self.state = 1
-        self.videoPlaying.emit()
-        print "Video is playing.", self.time
-    @QtCore.pyqtSlot()
-    def video_paused(self):
-        self.state = 2
-        self.videoPaused.emit()
-        print "Video is paused.", self.time
-    @QtCore.pyqtSlot()
-    def video_buffering(self):
-        self.state = 3
-        self.videoBuffering.emit()
-        print "Video is buffering."
-    @QtCore.pyqtSlot()
-    def video_cued(self):
-        self.state = 5
-        self.videoCued.emit()
-        print "Video is cued."
-    @QtCore.pyqtSlot(float)  
-    def curTime(self, time):
-        self.time = time
-        #print "Time on video", time
-    @QtCore.pyqtSlot(str)  
-    def curURL(self, URL):
-        self.URL = URL
-        self.ID = get_vid_code(URL)
-        #print "Time on video", time
-
-import cutieclient
-import cutieserv
 
 # http://www.youtube.com/watch?v=oy18DJwy5lI
 class MainForm(QtGui.QWidget):
@@ -122,8 +75,6 @@ class MainForm(QtGui.QWidget):
 
         self.ui.chatBoxInput.returnPressed.connect(self.send_chat_message)
 
-        self.ui.ipInputBox.returnPressed.connect(self.connect_to_server)
-
         self.current_idx = 0
 
         try:
@@ -131,16 +82,37 @@ class MainForm(QtGui.QWidget):
             self.server.start()
         except: self.server = None
 
-        self.client = cutieclient.CutieClient('localhost', 'Lizzy')
-        self.client.start()
-        self.client.vid_update_signal.sig.connect(self.client_state)
-        self.client.chat_signal.sig.connect(self.update_chat)
-        self.client.queue_signal.sig.connect(self.update_queue)
-
         self.chat_text = ''
+
+        # open dialogue
+        self.dialog = QtGui.QDialog()
+        self.dialog.ui = Ui_JoinDialog()
+        self.dialog.ui.setupUi(self.dialog)
+
+        self.dialog.ui.addressInput.setText("localhost") # debug
+        self.dialog.ui.nameInput.setText("Lizzy") # debug
+        self.dialog.ui.portInput.setText("55567") # debug
+
+        self.dialog.ui.okCancle.accepted.connect(self.connect_to_server)
+        self.dialog.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+        self.dialog.exec_()
 
     def web_loadFinished(self):
         self.ui.ytWebView.page().mainFrame().addToJavaScriptWindowObject('main', self.player)
+
+    # ----- START CLIENT/SERVER FUNCTIONS -----
+    def connect_to_server(self):
+        address = self.dialog.ui.addressInput.text()
+        port = int(self.dialog.ui.portInput.text())
+        name = self.dialog.ui.nameInput.text()
+
+        self.client = cutieclient.CutieClient(address, port, name)
+        self.client.start()
+        self.client.vid_update_signal.sig.connect(self.client_state)
+        self.client.chat_signal.sig.connect(self.update_chat)
+
+    def add_user(self, user_name, user_group):
+        self.ui.userList.addItem(User(user_name, user_group))
 
     # ----- START CONTEXT MENU FUNCTIONS -----
     def openQueueContextMenu(self, position):
@@ -162,17 +134,7 @@ class MainForm(QtGui.QWidget):
             clipboard = QtGui.QApplication.clipboard()
             clipboard.clear(mode=clipboard.Clipboard)
             clipboard.setText("https://www.youtube.com/watch?v="+item_id, mode=clipboard.Clipboard)
-
     # ----- END CONTEXT MENU FUNCTIONS -----
-
-    # ----- START CLIENT/SERVER FUNCTIONS -----
-    def connect_to_server(self):
-        self.client = cutieclient.CutieClient(self.ui.ipInputBox.text(), self.user_name)
-        self.client.start()
-        self.client.vid_update_signal.sig.connect(self.client_state)
-
-    def add_user(self, user_name, user_group):
-        self.ui.userList.addItem(User(user_name, user_group))
 
     # ----- CHAT FUNCTIONS -----
     def send_chat_message(self):
@@ -219,8 +181,12 @@ class MainForm(QtGui.QWidget):
 
     def play_next(self):
         if self.current_idx+1 != self.ui.ytQueue.count():
-            self.play_video(self.ui.ytQueue.item(self.current_idx+1).ytID)
-            self.current_idx += 1
+            self.ui.ytQueue.item(self.current_idx).setSelected(True)
+
+            item = self.ui.ytQueue.currentItem()
+            self.current_idx = self.ui.ytQueue.row(item)+1
+            self.play_video(self.ui.ytQueue.item(self.current_idx).ytID)
+            
             self.ui.ytQueue.item(self.current_idx).setSelected(True)
 
     def playlist_play_index(self, idx):
@@ -229,6 +195,11 @@ class MainForm(QtGui.QWidget):
         self.ui.ytQueue.item(self.current_idx).setSelected(True)
 
     # ----- QUEUE FUNCTIONS -----
+    def construct_queue(self):
+        id_list = []
+        for index in xrange(self.ui.ytQueue.count()):
+            id_list.append(self.ui.ytQueue.item(index).ytID)
+
     def send_queue_to_server(self):
         pass
 
@@ -247,7 +218,7 @@ class MainForm(QtGui.QWidget):
         self.ui.ytQueue.addItem(listItem)
         self.ui.ytQueue.scrollToBottom()
 
-        threading.Thread(target=self.scroll_up_delay).start()
+        self.construct_queue()
 
         self.ui.ytQueue.reset()
         self.ui.videoLineURL.clear()
@@ -257,10 +228,6 @@ class MainForm(QtGui.QWidget):
         print ("Current state: "+str(self.player.state))
         print ("Current vids in queue: "+str(self.ui.ytQueue.count()))
         print ("Current time on video: "+str(self.player.time))
-
-    def scroll_up_delay(self):
-        time.sleep(2)
-        self.ui.ytQueue.scrollToTop()
 
     def closeEvent(self, event):
         print("Closing and attempting to clear window.")

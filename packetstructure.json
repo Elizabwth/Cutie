@@ -1,22 +1,16 @@
 {"users":
 	[
 		{
+			"ip":		"127.0.0.1",
 			"name":		"Lizzy",
 			"power":	"admin"
 		},
 		{
+			"ip":		"127.0.0.1",
 			"name":		"Dizzy",
 			"power":	"user"
 		}
 	]
-}
-
-{"sync":
-	{
-	 	"id":		"BfaUUcDKkKc",
-		"state":	"playing",
-		"time":		0
-	}
 }
 
 {"queue":
@@ -31,6 +25,14 @@
 			"id":		"R4xrLKb6oFI"
 		}
 	]
+}
+
+{"sync":
+	{
+	 	"id":		"BfaUUcDKkKc",
+		"state":	"playing",
+		"time":		0
+	}
 }
 
 {"join_request":
