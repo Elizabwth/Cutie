@@ -67,12 +67,12 @@ class Ui_MainDialog(object):
         self.ytWebView.setPage(WebPage())
 
         # small player w/ bar
-        # self.ytWebView.setGeometry(QtCore.QRect(10, 10, 640, 360))
+        ##self.ytWebView.setGeometry(QtCore.QRect(10, 10, 640, 360))
         # reg player w/o bar
-        #self.ytWebView.setGeometry(QtCore.QRect(0, 0, 660, 370))
-
+        ##self.ytWebView.setGeometry(QtCore.QRect(0, 0, 660, 370))
         # reg player w/ bar -- standard!
         self.ytWebView.setGeometry(QtCore.QRect(0, 0, 660, 400))
+
         self.ytWebView.setUrl(QtCore.QUrl(_fromUtf8("about:blank")))
         self.ytWebView.setZoomFactor(1.0)
         self.ytWebView.setObjectName(_fromUtf8("ytWebView"))

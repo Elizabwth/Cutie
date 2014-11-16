@@ -20,6 +20,7 @@ class User(QtGui.QListWidgetItem):
         super(User, self).__init__('', parent)
 
         self.setText(user_name)
+        self.setToolTip(user_name)
 
 class Video(QtGui.QListWidgetItem):
     def __init__(self, text, parent=None):
@@ -77,11 +78,6 @@ class MainForm(QtGui.QWidget):
 
         self.current_idx = 0
 
-        try:
-            self.server = cutieserv.CutieServer()
-            self.server.start()
-        except: self.server = None
-
         self.chat_text = ''
 
         # open dialogue
@@ -103,16 +99,19 @@ class MainForm(QtGui.QWidget):
     # ----- START CLIENT/SERVER FUNCTIONS -----
     def connect_to_server(self):
         address = self.dialog.ui.addressInput.text()
-        port = int(self.dialog.ui.portInput.text())
-        name = self.dialog.ui.nameInput.text()
+        port    = int(self.dialog.ui.portInput.text())
+        name    = self.dialog.ui.nameInput.text()
 
         self.client = cutieclient.CutieClient(address, port, name)
         self.client.start()
         self.client.vid_update_signal.sig.connect(self.client_state)
         self.client.chat_signal.sig.connect(self.update_chat)
+        self.client.users_signal.sig.connect(self.populate_users)
 
-    def add_user(self, user_name, user_group):
-        self.ui.userList.addItem(User(user_name, user_group))
+    def populate_users(self, users):
+        self.ui.userList.clear()
+        for user in users:
+            self.ui.userList.addItem(User(user["name"]))
 
     # ----- START CONTEXT MENU FUNCTIONS -----
     def openQueueContextMenu(self, position):
@@ -235,6 +234,11 @@ class MainForm(QtGui.QWidget):
         sys.exit()
 
 if __name__ == '__main__':
+    try:
+        server = cutieserv.CutieServer()
+        server.start()
+    except: pass
+
     app = QtGui.QApplication(sys.argv)
     myapp = MainForm()
     myapp.show()

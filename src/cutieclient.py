@@ -19,6 +19,9 @@ class ChatSignal(QtCore.QObject):
 class QueueSignal(QtCore.QObject):
     sig = QtCore.pyqtSignal(list)
 
+class UsersSignal(QtCore.QObject):
+    sig = QtCore.pyqtSignal(list)
+
 class CutieClient(QtCore.QThread):
     def __init__(self, host, port, name, parent=None):
         QtCore.QThread.__init__(self, parent)
@@ -35,6 +38,7 @@ class CutieClient(QtCore.QThread):
         self.vid_update_signal  = VidUpdateSignal()
         self.chat_signal        = ChatSignal()
         self.queue_signal       = QueueSignal()
+        self.users_signal       = UsersSignal()
 
     def run(self):
         while True:
@@ -44,6 +48,7 @@ class CutieClient(QtCore.QThread):
             self.incoming_chat_handle(data)
             self.video_update_handle(data)
             self.queue_handle(data)
+            self.users_handle(data)
 
             if not data:
                 break
@@ -72,14 +77,20 @@ class CutieClient(QtCore.QThread):
         if data.startswith('{"queue":'):
             result = json.loads(data)
             queue = result["queue"]
-            self.vid_update_signal.sig.emit(queue)
+            self.queue_signal.sig.emit(queue)
+
+    def users_handle(self, data):
+        if data.startswith('{"users":'):
+            result = json.loads(data)
+            users = result["users"]
+            self.users_signal.sig.emit(users)
 
     def send_chat(self, message):
         data = '{"chat":{"name":"'+self.name+'","message":"'+message+'"}}'
         self.clientsocket.send(data)
 
 if __name__ == '__main__':
-    cc = CutieClient('localhost', 'Lizzy')
+    cc = CutieClient('localhost', 55567, 'Lizzy')
     cc.start()
     while True:
         pass

@@ -25,8 +25,8 @@ class CutieServer(QtCore.QThread):
 
         self.client_threads = []
 
-        self.queue = []
-        self.users = []
+        self.queue_json = None
+        self.users_json = None
 
     def run(self):
         while 1:
@@ -49,11 +49,28 @@ class CutieServer(QtCore.QThread):
 
     def broadcast_chat(self, message):
         for thread in self.client_threads:
-            thread.send_message_to_client(message)
+            thread.send_packet(message)
 
-    def broadcast_connected_users(self, users):
+    def broadcast_users(self):
+        # construct packet
+        data = {"users":[]}
+
         for thread in self.client_threads:
-            thread.send_users_to_client(users)
+            address = thread.address[0]
+            name    = thread.name
+            power   = "user"
+
+            if thread == self.client_threads[0]:
+                name += "*"
+                power = "admin"
+
+            data["users"] += [{"ip":address, "name":name, "power":power}]
+
+        # dump json to string
+        self.users_json = json.dumps(data)
+
+        for thread in self.client_threads:
+            thread.send_packet(self.users_json)
 
     def broadcast_queue(self, queue):
         pass
@@ -79,7 +96,7 @@ class ClientThread(QtCore.QThread):
                 data = 'None'
                 self.serv.disconnect_client(self)
 
-            # handle setting of user name
+            # handle setting of thread's user name
             if data.startswith('{"join_request"'):
                 result = json.loads(data)
                 self.name = result["join_request"]["name"]
@@ -87,22 +104,17 @@ class ClientThread(QtCore.QThread):
             # handle incoming chats
             if data.startswith('{"chat"'):
                 self.serv.broadcast_chat(data)
-            
+
+            self.serv.broadcast_users()
             if not data or data == 'None':
                 break
             else:
-                print "(ClientThread) recv: %s" % data
+                print "(ClientThread) recv: "+ data
     
         self.socket.close()
 
-    def send_message_to_client(self, message):
-        self.socket.send(message)
-
-    def send_queue_to_client(self, queue):
-        self.socket.send(message)
-
-    def send_users_to_client(self, users):
-        self.socket.send(message)
+    def send_packet(self, data):
+        self.socket.send(data)
 
     def request_queue(self):
         self.socket.send('{"queue_request"}')
