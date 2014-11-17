@@ -79,41 +79,41 @@ class Ui_MainDialog(object):
 
         # http://srinikom.github.io/pyside-docs/PySide/QtGui/QListWidget.html
         self.ytQueue = QtGui.QListWidget(MainDialog)
-        self.ytQueue.setGeometry(QtCore.QRect(10, 440, 371, 91))
+        self.ytQueue.setGeometry(QtCore.QRect(10, 412, 370, 118))
         self.ytQueue.setFrameShadow(QtGui.QFrame.Plain)
         self.ytQueue.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.ytQueue.setObjectName(_fromUtf8("ytQueue"))
 
         self.voteSkip = QtGui.QPushButton(MainDialog)
-        self.voteSkip.setGeometry(QtCore.QRect(280, 540, 71, 21))
+        self.voteSkip.setGeometry(QtCore.QRect(280, 540, 70, 20))
         self.voteSkip.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
         self.voteSkip.setObjectName(_fromUtf8("voteSkip"))
 
         self.addVideo = QtGui.QPushButton(MainDialog)
-        self.addVideo.setGeometry(QtCore.QRect(200, 540, 71, 21))
+        self.addVideo.setGeometry(QtCore.QRect(200, 540, 70, 20))
         self.addVideo.setObjectName(_fromUtf8("addVideo"))
 
         self.voteSkipLabel = QtGui.QLabel(MainDialog)
-        self.voteSkipLabel.setGeometry(QtCore.QRect(350, 540, 41, 21))
+        self.voteSkipLabel.setGeometry(QtCore.QRect(350, 540, 40, 20))
         self.voteSkipLabel.setLayoutDirection(QtCore.Qt.RightToLeft)
         self.voteSkipLabel.setFrameShape(QtGui.QFrame.NoFrame)
         self.voteSkipLabel.setAlignment(QtCore.Qt.AlignCenter)
         self.voteSkipLabel.setObjectName(_fromUtf8("voteSkipLabel"))
 
         self.videoLineURL = QtGui.QLineEdit(MainDialog)
-        self.videoLineURL.setGeometry(QtCore.QRect(10, 540, 181, 21))
+        self.videoLineURL.setGeometry(QtCore.QRect(10, 540, 180, 20))
         self.videoLineURL.setCursor(QtGui.QCursor(QtCore.Qt.IBeamCursor))
         self.videoLineURL.setInputMask(_fromUtf8(""))
         self.videoLineURL.setText(_fromUtf8(""))
-
         self.videoLineURL.setObjectName(_fromUtf8("videoLineURL"))
+
         self.userList = QtGui.QListWidget(MainDialog)
-        self.userList.setGeometry(QtCore.QRect(400, 440, 81, 121))
+        self.userList.setGeometry(QtCore.QRect(400, 412, 80, 148))
         self.userList.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.userList.setObjectName(_fromUtf8("userList"))
 
         self.chatArea = QtGui.QTextBrowser(MainDialog)
-        self.chatArea.setGeometry(QtCore.QRect(490, 440, 161, 101))
+        self.chatArea.setGeometry(QtCore.QRect(490, 412, 160, 128))
         self.chatArea.setFrameShape(QtGui.QFrame.StyledPanel)
         self.chatArea.setFrameShadow(QtGui.QFrame.Plain)
         self.chatArea.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
@@ -121,17 +121,17 @@ class Ui_MainDialog(object):
         self.chatArea.setObjectName(_fromUtf8("chatArea"))
 
         self.chatBoxInput = QtGui.QLineEdit(MainDialog)
-        self.chatBoxInput.setGeometry(QtCore.QRect(490, 540, 161, 21))
+        self.chatBoxInput.setGeometry(QtCore.QRect(490, 540, 160, 20))
         self.chatBoxInput.setCursor(QtGui.QCursor(QtCore.Qt.IBeamCursor))
         self.chatBoxInput.setText(_fromUtf8(""))
         self.chatBoxInput.setObjectName(_fromUtf8("chatBoxInput"))
 
-        self.playlistLabel = QtGui.QLabel(MainDialog)
-        self.playlistLabel.setGeometry(QtCore.QRect(10, 420, 46, 16))
-        self.playlistLabel.setObjectName(_fromUtf8("playlistLabel"))
+        #self.playlistLabel = QtGui.QLabel(MainDialog)
+        #self.playlistLabel.setGeometry(QtCore.QRect(10, 405, 46, 16))
+        #self.playlistLabel.setObjectName(_fromUtf8("playlistLabel"))
 
         self.line = QtGui.QFrame(MainDialog)
-        self.line.setGeometry(QtCore.QRect(380, 440, 20, 121))
+        self.line.setGeometry(QtCore.QRect(380, 412, 20, 148))
         self.line.setFrameShadow(QtGui.QFrame.Raised)
         self.line.setFrameShape(QtGui.QFrame.VLine)
         self.line.setFrameShadow(QtGui.QFrame.Sunken)
@@ -166,5 +166,5 @@ class Ui_MainDialog(object):
             "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;\"><br />%s</p>\
             </body></html>" % "<span>...</span>", None))
         self.chatBoxInput.setPlaceholderText(_translate("MainDialog", "Enter message here", None))
-        self.playlistLabel.setText(_translate("MainDialog", "Playlist", None))
+        #self.playlistLabel.setText(_translate("MainDialog", "Playlist", None))
 
