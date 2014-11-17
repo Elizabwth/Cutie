@@ -10,6 +10,20 @@ from PyQt4 import QtCore
 
 from utils import *
 
+class Tick(QtCore.QThread):
+    def __init__(self, parent=None):
+        QtCore.QThread.__init__(self, parent)
+        self.server = None
+
+    def set_server(self, server):
+        self.server = server
+
+    def run(self):
+        while 1:
+            time.sleep(1)
+            self.server.tick()
+        self.terminate()
+
 class CutieServer(QtCore.QThread):
     def __init__(self, parent=None):
         QtCore.QThread.__init__(self, parent)
@@ -26,10 +40,16 @@ class CutieServer(QtCore.QThread):
         self.client_threads = []
 
         self.queue_json = None
-        self.users_json = None
+
+        self.ticker = Tick()
+        self.ticker.set_server(self)
 
     def run(self):
+        self.ticker.start()
+
         while 1:
+            time.sleep(1)
+
             print "Listening for connections...\n"
             clientsocket, clientaddr = self.serversocket.accept()
             print "Accepted connection from:", clientaddr
@@ -39,13 +59,15 @@ class CutieServer(QtCore.QThread):
             ct.start()
             self.client_threads.append(ct)
 
-            time.sleep(0.05)
-
             print "Current users connected: "+str(len(self.client_threads))
 
     def disconnect_client(self, thread):
         print "Disconnecting user ("+thread.name+") with address "+str(thread.address[0])+" and popping thread"
         self.client_threads.remove(thread)
+
+    def broadcast_sync(self, data):
+        for thread in self.client_threads[1:]:
+            thread.send_packet(data)
 
     def broadcast_chat(self, message):
         for thread in self.client_threads:
@@ -68,22 +90,25 @@ class CutieServer(QtCore.QThread):
 
         # dump json to string
         self.users_json = json.dumps(data)
-
         for thread in self.client_threads:
             thread.send_packet(self.users_json)
 
     def broadcast_queue(self, queue):
-        pass
+        for thread in self.client_threads[1:]:
+            thread.send_packet(queue)
 
+    def tick(self):
+        if len(self.client_threads) > 0:
+            self.client_threads[0].request_queue()
+            self.broadcast_users()
 
 class ClientThread(QtCore.QThread):
     def __init__(self, socket, address, parent=None):
         QtCore.QThread.__init__(self, parent)
 
-        self.socket = socket
+        self.socket  = socket
         self.address = address
-
-        self.name = ""
+        self.name    = ""
 
         self.serv = None
 
@@ -105,7 +130,13 @@ class ClientThread(QtCore.QThread):
             if data.startswith('{"chat"'):
                 self.serv.broadcast_chat(data)
 
-            self.serv.broadcast_users()
+            # handle sending data to all clients other than the orchestrator (first user)
+            if (len(self.serv.client_threads) > 0):
+                if ((self == self.serv.client_threads[0]) and data.startswith('{"sync"')):
+                    self.serv.broadcast_sync(data)
+                if ((self == self.serv.client_threads[0]) and data.startswith('{"queue"')):
+                    self.serv.broadcast_queue(data)
+            
             if not data or data == 'None':
                 break
             else:
@@ -123,4 +154,4 @@ if __name__ == "__main__":
     cs = CutieServer()
     cs.start()
     while True:
-        pass
+        time.sleep(1)

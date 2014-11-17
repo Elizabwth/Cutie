@@ -14,17 +14,24 @@
 }
 
 {"queue":
-	[
-		{
-			"id":		"A1VluhCYw1A"
-		},
-		{
-			"id":		"fGx6fogeuLo"
-		},
-		{
-			"id":		"R4xrLKb6oFI"
-		}
-	]
+	{
+		"index":0,
+		"videos":
+			[
+				{
+					"id":		"A1VluhCYw1A",
+					"title": 	"title"
+				},
+				{
+					"id":		"fGx6fogeuLo",
+					"title": 	"title"
+				},
+				{
+					"id":		"R4xrLKb6oFI",
+					"title": 	"title"
+				}
+			]
+	}
 }
 
 {"sync":

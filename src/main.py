@@ -23,14 +23,18 @@ class User(QtGui.QListWidgetItem):
         self.setToolTip(user_name)
 
 class Video(QtGui.QListWidgetItem):
-    def __init__(self, text, parent=None):
-        self.ytID = text
-        
+    def __init__(self, ytid, title, added_by, parent=None):
         super(Video, self).__init__('', parent)
+        self.ytID = ytid
+        self.title = title
+        self.added_by = added_by
+        
+        self.setText(title)
 
-        self.setText('Retreiving title of "'+text+'."')
-        self.t1 = threading.Thread(target=self.set_video_title)
-        self.t1.start()
+        if ytid == title:
+            self.setText('Retreiving title of "'+ytid+'."')
+            self.t1 = threading.Thread(target=self.set_video_title)
+            self.t1.start()
 
     def set_video_title(self):
         try:
@@ -40,9 +44,9 @@ class Video(QtGui.QListWidgetItem):
             title       = entry.media.title.text
             duration    = entry.media.duration.seconds
     
-            text = title + " - " + clock_from_seconds(duration)
-            self.setText(text)
-            self.setToolTip(text+"\nAdded by %s." % ("Lizzy"))
+            self.title = title + " - " + clock_from_seconds(duration)
+            self.setText(self.title)
+            self.setToolTip(self.title+"\nAdded by %s." % (self.added_by))
         except:
             self.setText("Retrying to retreive title...")
             self.t1 = threading.Thread(target=self.set_video_title)
@@ -73,15 +77,17 @@ class MainForm(QtGui.QWidget):
         self.ui.ytQueue.setDragDropMode(QtGui.QAbstractItemView.InternalMove)
         self.ui.ytQueue.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.ui.ytQueue.customContextMenuRequested.connect(self.openQueueContextMenu)
+        self.ui.ytQueue.installEventFilter(self)
 
         self.ui.chatBoxInput.returnPressed.connect(self.send_chat_message)
 
         self.current_idx = 0
+        self.playing_id = ''
 
         self.chat_text = ''
 
         # open dialogue
-        self.dialog = QtGui.QDialog()
+        self.dialog = QtGui.QDialog(None, QtCore.Qt.WindowSystemMenuHint | QtCore.Qt.WindowTitleHint)
         self.dialog.ui = Ui_JoinDialog()
         self.dialog.ui.setupUi(self.dialog)
 
@@ -92,6 +98,8 @@ class MainForm(QtGui.QWidget):
         self.dialog.ui.okCancle.accepted.connect(self.connect_to_server)
         self.dialog.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.dialog.exec_()
+
+        self.user_name = self.dialog.ui.nameInput.text
 
     def web_loadFinished(self):
         self.ui.ytWebView.page().mainFrame().addToJavaScriptWindowObject('main', self.player)
@@ -107,6 +115,9 @@ class MainForm(QtGui.QWidget):
         self.client.vid_update_signal.sig.connect(self.client_state)
         self.client.chat_signal.sig.connect(self.update_chat)
         self.client.users_signal.sig.connect(self.populate_users)
+        self.client.queue_signal.sig.connect(self.populate_queue)
+
+        self.client.queue_request_signal.sig.connect(self.send_queue)
 
     def populate_users(self, users):
         self.ui.userList.clear()
@@ -137,7 +148,9 @@ class MainForm(QtGui.QWidget):
 
     # ----- CHAT FUNCTIONS -----
     def send_chat_message(self):
-        self.client.send_chat(str(self.ui.chatBoxInput.text()))
+        text = str(self.ui.chatBoxInput.text())
+        text = text.replace('"', "&quot;") 
+        self.client.send_chat(text)
         self.ui.chatBoxInput.setText("")
 
     def update_chat(self, message):
@@ -153,10 +166,8 @@ class MainForm(QtGui.QWidget):
 
     # ----- STATE FUNCTIONS -----
     def transmit_state(self):
-        if self.server != None:
-            for client in self.server.client_threads[1:]:
-                data = '{"sync":{"id":"'+self.player.ID+'","state":'+str(self.player.state)+',"time":'+str(self.player.time)+'}}'
-                client.socket.send(data)
+        data = '{"sync":{"id":"'+self.player.ID+'","state":'+str(self.player.state)+',"time":'+str(self.player.time)+'}}'
+        self.client.clientsocket.send(data)
 
     def client_state(self, video_id, time, state):
         self.get_current_time_and_state()
@@ -176,16 +187,15 @@ class MainForm(QtGui.QWidget):
     
     # ----- VIDEO PLAYBACK FUNCTIONS -----
     def play_video(self, vid):
+        self.playing_id = vid
         self.ui.ytWebView.page().mainFrame().evaluateJavaScript("showVideo('"+vid+"',true)")
 
     def play_next(self):
         if self.current_idx+1 != self.ui.ytQueue.count():
-            self.ui.ytQueue.item(self.current_idx).setSelected(True)
 
             item = self.ui.ytQueue.currentItem()
             self.current_idx = self.ui.ytQueue.row(item)+1
             self.play_video(self.ui.ytQueue.item(self.current_idx).ytID)
-            
             self.ui.ytQueue.item(self.current_idx).setSelected(True)
 
     def playlist_play_index(self, idx):
@@ -194,14 +204,36 @@ class MainForm(QtGui.QWidget):
         self.ui.ytQueue.item(self.current_idx).setSelected(True)
 
     # ----- QUEUE FUNCTIONS -----
+    # --- SERVER REQUESTED ---
     def construct_queue(self):
-        id_list = []
+        queue = {"queue":{"index":self.current_idx,"videos":[]}}
+
         for index in xrange(self.ui.ytQueue.count()):
-            id_list.append(self.ui.ytQueue.item(index).ytID)
+            ytid = self.ui.ytQueue.item(index).ytID
+            title = self.ui.ytQueue.item(index).title
 
-    def send_queue_to_server(self):
-        pass
+            queue["queue"]["videos"] += [{"id":ytid,"title":title}]
 
+        return queue
+
+    def send_queue(self):
+        data = json.dumps(self.construct_queue())
+        self.client.clientsocket.send(data)
+
+    # --- FROM SERVER ---
+    def populate_queue(self, index, videos):
+        self.current_idx = index
+
+        self.ui.ytQueue.clear()
+        for video in videos:
+            listItem = Video(video["id"], video["title"], "?")
+            self.ui.ytQueue.addItem(listItem)
+            self.ui.ytQueue.reset()
+
+        if self.ui.ytQueue.count() > 0:
+            self.ui.ytQueue.item(self.current_idx).setSelected(True)
+
+    # --- ORCHESTRATOR ---
     def add_to_queue(self):
         """Adds url to the playlist"""
         url = self.ui.videoLineURL.text()
@@ -213,11 +245,9 @@ class MainForm(QtGui.QWidget):
         if self.ui.ytQueue.count() == 0 or self.player.state == 0:
             self.play_video(vid_code)
 
-        listItem = Video(vid_code)
+        listItem = Video(vid_code, vid_code, self.user_name)
         self.ui.ytQueue.addItem(listItem)
         self.ui.ytQueue.scrollToBottom()
-
-        self.construct_queue()
 
         self.ui.ytQueue.reset()
         self.ui.videoLineURL.clear()
@@ -228,10 +258,21 @@ class MainForm(QtGui.QWidget):
         print ("Current vids in queue: "+str(self.ui.ytQueue.count()))
         print ("Current time on video: "+str(self.player.time))
 
+        self.construct_queue()
+
     def closeEvent(self, event):
         print("Closing and attempting to clear window.")
         self.ui.ytWebView.page().mainFrame().evaluateJavaScript("clearVideo()")
         sys.exit()
+
+    # http://stackoverflow.com/questions/13788452/pyqt-how-to-handle-event-without-inheritance
+    def eventFilter(self, source, event):
+        if event.type() == QtCore.QEvent.ChildRemoved: # and source is self.ui.ytQueue)
+            dropped = source.currentItem()
+            if self.playing_id == dropped.ytID:
+                self.current_idx = source.row(dropped)
+
+        return QtGui.QWidget.eventFilter(self, source, event)
 
 if __name__ == '__main__':
     try:

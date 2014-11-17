@@ -17,10 +17,13 @@ class ChatSignal(QtCore.QObject):
     sig = QtCore.pyqtSignal(str)
 
 class QueueSignal(QtCore.QObject):
-    sig = QtCore.pyqtSignal(list)
+    sig = QtCore.pyqtSignal(int, list)
 
 class UsersSignal(QtCore.QObject):
     sig = QtCore.pyqtSignal(list)
+
+class QueueRequestSignal(QtCore.QObject):
+    sig = QtCore.pyqtSignal()
 
 class CutieClient(QtCore.QThread):
     def __init__(self, host, port, name, parent=None):
@@ -40,6 +43,8 @@ class CutieClient(QtCore.QThread):
         self.queue_signal       = QueueSignal()
         self.users_signal       = UsersSignal()
 
+        self.queue_request_signal = QueueRequestSignal()
+
     def run(self):
         while True:
             data = self.clientsocket.recv(1024)
@@ -50,10 +55,12 @@ class CutieClient(QtCore.QThread):
             self.queue_handle(data)
             self.users_handle(data)
 
+            self.queue_request_handle(data)
+
             if not data:
                 break
             else:
-                print data
+                print "client recv " + data
 
         self.clientsocket.close()
 
@@ -73,17 +80,22 @@ class CutieClient(QtCore.QThread):
             state = result["sync"]["state"]
             self.vid_update_signal.sig.emit(vid_id, time, state)
 
-    def queue_handle(self, data):
-        if data.startswith('{"queue":'):
-            result = json.loads(data)
-            queue = result["queue"]
-            self.queue_signal.sig.emit(queue)
-
     def users_handle(self, data):
         if data.startswith('{"users":'):
             result = json.loads(data)
             users = result["users"]
             self.users_signal.sig.emit(users)
+
+    def queue_handle(self, data):
+        if data.startswith('{"queue":'):
+            result = json.loads(data)
+            index = result["queue"]["index"]
+            videos = result["queue"]["videos"]
+            self.queue_signal.sig.emit(index, videos)
+
+    def queue_request_handle(self, data):
+        if data.startswith('{"queue_request"}'):
+            self.queue_request_signal.sig.emit()
 
     def send_chat(self, message):
         data = '{"chat":{"name":"'+self.name+'","message":"'+message+'"}}'
