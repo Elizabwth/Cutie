@@ -75,7 +75,7 @@ class MainForm(QtGui.QWidget):
         self.player.videoPlaying.connect(self.transmit_state)
         self.player.videoPaused.connect(self.transmit_state)
 
-        self.ui.addVideo.clicked.connect(self.add_to_queue)
+        #self.ui.addVideo.clicked.connect(self.add_to_queue)
         self.ui.videoLineURL.returnPressed.connect(self.add_to_queue)
         self.ui.voteSkip.clicked.connect(self.get_current_time_and_state)
 
@@ -89,8 +89,10 @@ class MainForm(QtGui.QWidget):
 
         self.current_idx = 0
         self.playing_id = ''
-
         self.chat_text = ''
+
+        self.skip_votes_total = 0
+        self.total_users = 0
 
         # open dialogue
         self.dialog = QtGui.QDialog(None, QtCore.Qt.WindowSystemMenuHint | QtCore.Qt.WindowTitleHint)
@@ -129,6 +131,10 @@ class MainForm(QtGui.QWidget):
         self.ui.userList.clear()
         for user in users:
             self.ui.userList.addItem(User(user["name"]))
+
+        self.total_users = len(users)
+
+        self.ui.voteSkipLabel.setText(str(self.skip_votes_total)+"/"+str(self.total_users))
 
     # ----- START CONTEXT MENU FUNCTIONS -----
     def openQueueContextMenu(self, position):

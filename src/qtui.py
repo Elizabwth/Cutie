@@ -89,9 +89,9 @@ class Ui_MainDialog(object):
         self.voteSkip.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
         self.voteSkip.setObjectName(_fromUtf8("voteSkip"))
 
-        self.addVideo = QtGui.QPushButton(MainDialog)
-        self.addVideo.setGeometry(QtCore.QRect(200, 540, 70, 20))
-        self.addVideo.setObjectName(_fromUtf8("addVideo"))
+        #self.addVideo = QtGui.QPushButton(MainDialog)
+        #self.addVideo.setGeometry(QtCore.QRect(200, 540, 70, 20))
+        #self.addVideo.setObjectName(_fromUtf8("addVideo"))
 
         self.voteSkipLabel = QtGui.QLabel(MainDialog)
         self.voteSkipLabel.setGeometry(QtCore.QRect(350, 540, 40, 20))
@@ -101,7 +101,7 @@ class Ui_MainDialog(object):
         self.voteSkipLabel.setObjectName(_fromUtf8("voteSkipLabel"))
 
         self.videoLineURL = QtGui.QLineEdit(MainDialog)
-        self.videoLineURL.setGeometry(QtCore.QRect(10, 540, 180, 20))
+        self.videoLineURL.setGeometry(QtCore.QRect(10, 540, 260, 20))
         self.videoLineURL.setCursor(QtGui.QCursor(QtCore.Qt.IBeamCursor))
         self.videoLineURL.setInputMask(_fromUtf8(""))
         self.videoLineURL.setText(_fromUtf8(""))
@@ -140,8 +140,8 @@ class Ui_MainDialog(object):
         self.retranslateUi(MainDialog)
         QtCore.QMetaObject.connectSlotsByName(MainDialog)
         MainDialog.setTabOrder(self.ytQueue, self.videoLineURL)
-        MainDialog.setTabOrder(self.videoLineURL, self.addVideo)
-        MainDialog.setTabOrder(self.addVideo, self.voteSkip)
+        MainDialog.setTabOrder(self.videoLineURL, self.voteSkip)
+        #MainDialog.setTabOrder(self.addVideo, self.voteSkip)
         #MainDialog.setTabOrder(self.voteSkip, self.ipInputBox)
         MainDialog.setTabOrder(self.voteSkip, self.userList)
         #MainDialog.setTabOrder(self.ipInputBox, self.joinButton)
@@ -156,7 +156,7 @@ class Ui_MainDialog(object):
         #self.ipInputBox.setPlaceholderText(_translate("MainDialog", "Host IP", None))
         #self.joinButton.setText(_translate("MainDialog", "Join", None))
         self.voteSkip.setText(_translate("MainDialog", "Vote Skip", None))
-        self.addVideo.setText(_translate("MainDialog", "Add Video", None))
+        #self.addVideo.setText(_translate("MainDialog", "Add Video", None))
         self.voteSkipLabel.setText(_translate("MainDialog", "0/0", None))
         self.videoLineURL.setPlaceholderText(_translate("MainDialog", "Video URL", None))
         self.chatArea.setHtml(_translate("MainDialog", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
