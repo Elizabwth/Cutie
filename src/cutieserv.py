@@ -20,7 +20,7 @@ class Tick(QtCore.QThread):
 
     def run(self):
         while 1:
-            time.sleep(1)
+            time.sleep(5)
             self.server.tick()
         self.terminate()
 
@@ -48,8 +48,6 @@ class CutieServer(QtCore.QThread):
         self.ticker.start()
 
         while 1:
-            time.sleep(1)
-
             print "Listening for connections...\n"
             clientsocket, clientaddr = self.serversocket.accept()
             print "Accepted connection from:", clientaddr

@@ -105,4 +105,4 @@ if __name__ == '__main__':
     cc = CutieClient('localhost', 55567, 'Lizzy')
     cc.start()
     while True:
-        pass
+        time.sleep(1)
