@@ -77,12 +77,13 @@ class MainForm(QtGui.QWidget):
 
         self.ui.videoLineURL.returnPressed.connect(self.add_to_queue)
         self.ui.voteSkip.clicked.connect(self.print_current_time_and_state)
-
+        
         self.ui.ytQueue.doubleClicked.connect(self.playlist_play_index)
         self.ui.ytQueue.setDragDropMode(QtGui.QAbstractItemView.InternalMove)
+        self.ui.ytQueue.installEventFilter(self)
+
         self.ui.ytQueue.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.ui.ytQueue.customContextMenuRequested.connect(self.openQueueContextMenu)
-        self.ui.ytQueue.installEventFilter(self)
 
         self.ui.chatBoxInput.returnPressed.connect(self.send_chat_message)
 
@@ -206,10 +207,9 @@ class MainForm(QtGui.QWidget):
         self.ui.ytWebView.page().mainFrame().evaluateJavaScript("showVideo('"+vid+"',true)")
 
     def play_next(self):
-        if self.current_idx+1 != self.ui.ytQueue.count():
+        if self.current_idx+1 < self.ui.ytQueue.count():
 
-            item = self.ui.ytQueue.currentItem()
-            self.current_idx = self.ui.ytQueue.row(item)+1
+            self.current_idx += 1
             self.play_video(self.ui.ytQueue.item(self.current_idx).ytID)
             self.ui.ytQueue.item(self.current_idx).setSelected(True)
 
@@ -257,14 +257,15 @@ class MainForm(QtGui.QWidget):
         if vid_code == 'xxx':
             QtGui.QMessageBox.warning(self, "Oopsie!", "Bad video URL.\nI only support YouTube video playback.")
             return
-        if self.ui.ytQueue.count() == 0 or self.player.state == 0:
-            self.play_video(vid_code)
 
         listItem = Video(vid_code, vid_code, self.user_name)
         self.ui.ytQueue.addItem(listItem)
         self.ui.ytQueue.scrollToBottom()
+        #self.ui.ytQueue.reset()
+        if self.ui.ytQueue.count() == 1:
+            self.play_video(vid_code)
+            listItem.setSelected(True)
 
-        self.ui.ytQueue.reset()
         self.ui.videoLineURL.clear()
 
     def print_current_time_and_state(self):
