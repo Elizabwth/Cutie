@@ -13,6 +13,7 @@ from joindialog import *
 from player import Player
 import cutieclient
 import cutieserv
+import adblocker
 
 class User(QtGui.QListWidgetItem):
     def __init__(self, user_name, parent=None):
@@ -21,6 +22,7 @@ class User(QtGui.QListWidgetItem):
 
         self.setText(user_name)
         self.setToolTip(user_name)
+        #self.setIcon(QtGui.QIcon(r"../res/img/user.png"))
 
 class Video(QtGui.QListWidgetItem):
     def __init__(self, ytid, title, added_by, parent=None):
@@ -30,6 +32,7 @@ class Video(QtGui.QListWidgetItem):
         self.added_by = added_by
         
         self.setText(title)
+        self.setIcon(QtGui.QIcon(r"../res/img/film-youtube.png"))
 
         if ytid == title:
             self.setText('Retreiving title of "'+ytid+'."')
@@ -52,12 +55,15 @@ class Video(QtGui.QListWidgetItem):
             self.t1 = threading.Thread(target=self.set_video_title)
             self.t1.start()
 
-# http://www.youtube.com/watch?v=oy18DJwy5lI
 class MainForm(QtGui.QWidget):
     def __init__(self):
         super(MainForm, self).__init__()
         self.ui = Ui_MainDialog()
         self.ui.setupUi(self)
+
+        adManager = adblocker.AdblockerNetworkManager()
+        self.ui.ytWebView.page().setNetworkAccessManager(adManager)
+
         self.ui.ytWebView.settings().setAttribute(QtWebKit.QWebSettings.PluginsEnabled, True) 
         self.ui.ytWebView.setUrl(QtCore.QUrl('../res/docs/index.html'))
 
