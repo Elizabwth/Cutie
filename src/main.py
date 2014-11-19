@@ -32,7 +32,7 @@ class Video(QtGui.QListWidgetItem):
         self.added_by = added_by
         
         self.setText(title)
-        self.setIcon(QtGui.QIcon(r"../res/img/film-youtube.png"))
+        self.setIcon(QtGui.QIcon(r"../res/img/youtube.png"))
 
         if ytid == title:
             self.setText('Retreiving title of "'+ytid+'."')
@@ -75,9 +75,8 @@ class MainForm(QtGui.QWidget):
         self.player.videoPlaying.connect(self.transmit_state)
         self.player.videoPaused.connect(self.transmit_state)
 
-        #self.ui.addVideo.clicked.connect(self.add_to_queue)
         self.ui.videoLineURL.returnPressed.connect(self.add_to_queue)
-        self.ui.voteSkip.clicked.connect(self.get_current_time_and_state)
+        self.ui.voteSkip.clicked.connect(self.print_current_time_and_state)
 
         self.ui.ytQueue.doubleClicked.connect(self.playlist_play_index)
         self.ui.ytQueue.setDragDropMode(QtGui.QAbstractItemView.InternalMove)
@@ -94,7 +93,7 @@ class MainForm(QtGui.QWidget):
         self.skip_votes_total = 0
         self.total_users = 0
 
-        # open dialogue
+        # open connect dialogue
         self.dialog = QtGui.QDialog(None, QtCore.Qt.WindowSystemMenuHint | QtCore.Qt.WindowTitleHint)
         self.dialog.ui = Ui_JoinDialog()
         self.dialog.ui.setupUi(self.dialog)
@@ -142,9 +141,13 @@ class MainForm(QtGui.QWidget):
         if len(self.ui.ytQueue)==0: 
             return
 
+        cbicon = QtGui.QIcon(r"../res/img/clipboard.png")
+        ericon = QtGui.QIcon(r"../res/img/eraser.png")
+
         menu         = QtGui.QMenu(self.ui.ytQueue)
-        removeAction = menu.addAction("Remove from queue")
-        copyAction   = menu.addAction("Copy URL to clipboard")
+
+        removeAction = menu.addAction(ericon, "Remove from queue")
+        copyAction   = menu.addAction(cbicon, "Copy URL to clipboard")
         action       = menu.exec_(self.ui.ytQueue.mapToGlobal(position))
 
         if action == removeAction:
@@ -182,7 +185,7 @@ class MainForm(QtGui.QWidget):
         self.client.clientsocket.send(data)
 
     def client_state(self, video_id, time, state):
-        self.get_current_time_and_state()
+        self.print_current_time_and_state()
         print video_id, time, state
 
         # Need to implement a play from (id, time) function as well as 
@@ -264,13 +267,11 @@ class MainForm(QtGui.QWidget):
         self.ui.ytQueue.reset()
         self.ui.videoLineURL.clear()
 
-    def get_current_time_and_state(self):
+    def print_current_time_and_state(self):
         self.ui.ytWebView.page().mainFrame().evaluateJavaScript("getCurrentTime()")
         print ("Current state: "+str(self.player.state))
         print ("Current vids in queue: "+str(self.ui.ytQueue.count()))
         print ("Current time on video: "+str(self.player.time))
-
-        self.construct_queue()
 
     def closeEvent(self, event):
         print("Closing and attempting to clear window.")
