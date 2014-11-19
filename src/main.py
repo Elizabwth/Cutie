@@ -22,7 +22,7 @@ class User(QtGui.QListWidgetItem):
 
         self.setText(user_name)
         self.setToolTip(user_name)
-        #self.setIcon(QtGui.QIcon(r"../res/img/user.png"))
+        self.setIcon(QtGui.QIcon(r"../res/img/user.png"))
 
 class Video(QtGui.QListWidgetItem):
     def __init__(self, ytid, title, added_by, parent=None):

@@ -42,14 +42,14 @@ class WebPage(QtWebKit.QWebPage):
 class Ui_MainDialog(object):
     def setupUi(self, MainDialog):
         MainDialog.setObjectName(_fromUtf8("MainDialog"))
-        MainDialog.resize(660, 570)
+        MainDialog.resize(854, 680)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(MainDialog.sizePolicy().hasHeightForWidth())
         MainDialog.setSizePolicy(sizePolicy)
-        MainDialog.setMinimumSize(QtCore.QSize(660, 400))
-        MainDialog.setMaximumSize(QtCore.QSize(660, 570))
+        MainDialog.setMinimumSize(QtCore.QSize(854, 510))
+        MainDialog.setMaximumSize(QtCore.QSize(854, 680))
         MainDialog.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
         MainDialog.setContextMenuPolicy(QtCore.Qt.DefaultContextMenu)
         #MainDialog.setSizeGripEnabled(False)
@@ -71,7 +71,9 @@ class Ui_MainDialog(object):
         # reg player w/o bar
         ##self.ytWebView.setGeometry(QtCore.QRect(0, 0, 660, 370))
         # reg player w/ bar -- standard!
-        self.ytWebView.setGeometry(QtCore.QRect(0, 0, 660, 400))
+        #self.ytWebView.setGeometry(QtCore.QRect(0, 0, 660, 400))
+        # bigger player w/ bar
+        self.ytWebView.setGeometry(QtCore.QRect(0, 0, 854, 510))
 
         self.ytWebView.setUrl(QtCore.QUrl(_fromUtf8("about:blank")))
         self.ytWebView.setZoomFactor(1.0)
@@ -79,13 +81,13 @@ class Ui_MainDialog(object):
 
         # http://srinikom.github.io/pyside-docs/PySide/QtGui/QListWidget.html
         self.ytQueue = QtGui.QListWidget(MainDialog)
-        self.ytQueue.setGeometry(QtCore.QRect(10, 412, 370, 118))
+        self.ytQueue.setGeometry(QtCore.QRect(10, 522, 370, 118))
         self.ytQueue.setFrameShadow(QtGui.QFrame.Plain)
         self.ytQueue.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.ytQueue.setObjectName(_fromUtf8("ytQueue"))
 
         self.voteSkip = QtGui.QPushButton(MainDialog)
-        self.voteSkip.setGeometry(QtCore.QRect(280, 540, 70, 20))
+        self.voteSkip.setGeometry(QtCore.QRect(280, 650, 70, 20))
         self.voteSkip.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
         self.voteSkip.setObjectName(_fromUtf8("voteSkip"))
 
@@ -94,26 +96,26 @@ class Ui_MainDialog(object):
         #self.addVideo.setObjectName(_fromUtf8("addVideo"))
 
         self.voteSkipLabel = QtGui.QLabel(MainDialog)
-        self.voteSkipLabel.setGeometry(QtCore.QRect(350, 540, 40, 20))
+        self.voteSkipLabel.setGeometry(QtCore.QRect(350, 650, 40, 20))
         self.voteSkipLabel.setLayoutDirection(QtCore.Qt.RightToLeft)
         self.voteSkipLabel.setFrameShape(QtGui.QFrame.NoFrame)
         self.voteSkipLabel.setAlignment(QtCore.Qt.AlignCenter)
         self.voteSkipLabel.setObjectName(_fromUtf8("voteSkipLabel"))
 
         self.videoLineURL = QtGui.QLineEdit(MainDialog)
-        self.videoLineURL.setGeometry(QtCore.QRect(10, 540, 260, 20))
+        self.videoLineURL.setGeometry(QtCore.QRect(10, 650, 260, 20))
         self.videoLineURL.setCursor(QtGui.QCursor(QtCore.Qt.IBeamCursor))
         self.videoLineURL.setInputMask(_fromUtf8(""))
         self.videoLineURL.setText(_fromUtf8(""))
         self.videoLineURL.setObjectName(_fromUtf8("videoLineURL"))
 
         self.userList = QtGui.QListWidget(MainDialog)
-        self.userList.setGeometry(QtCore.QRect(400, 412, 80, 148))
+        self.userList.setGeometry(QtCore.QRect(400, 522, 130, 148))
         self.userList.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.userList.setObjectName(_fromUtf8("userList"))
 
         self.chatArea = QtGui.QTextBrowser(MainDialog)
-        self.chatArea.setGeometry(QtCore.QRect(490, 412, 160, 128))
+        self.chatArea.setGeometry(QtCore.QRect(540, 522, 304, 128))
         self.chatArea.setFrameShape(QtGui.QFrame.StyledPanel)
         self.chatArea.setFrameShadow(QtGui.QFrame.Plain)
         self.chatArea.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
@@ -121,7 +123,7 @@ class Ui_MainDialog(object):
         self.chatArea.setObjectName(_fromUtf8("chatArea"))
 
         self.chatBoxInput = QtGui.QLineEdit(MainDialog)
-        self.chatBoxInput.setGeometry(QtCore.QRect(490, 540, 160, 20))
+        self.chatBoxInput.setGeometry(QtCore.QRect(540, 650, 304, 20))
         self.chatBoxInput.setCursor(QtGui.QCursor(QtCore.Qt.IBeamCursor))
         self.chatBoxInput.setText(_fromUtf8(""))
         self.chatBoxInput.setObjectName(_fromUtf8("chatBoxInput"))
@@ -131,7 +133,7 @@ class Ui_MainDialog(object):
         #self.playlistLabel.setObjectName(_fromUtf8("playlistLabel"))
 
         self.line = QtGui.QFrame(MainDialog)
-        self.line.setGeometry(QtCore.QRect(380, 412, 20, 148))
+        self.line.setGeometry(QtCore.QRect(380, 522, 20, 148))
         self.line.setFrameShadow(QtGui.QFrame.Raised)
         self.line.setFrameShape(QtGui.QFrame.VLine)
         self.line.setFrameShadow(QtGui.QFrame.Sunken)
