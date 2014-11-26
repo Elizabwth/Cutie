@@ -154,7 +154,8 @@ class Ui_MainDialog(object):
 
     def retranslateUi(self, MainDialog):
         MainDialog.setWindowTitle(_translate("MainDialog", "Cutie Sync", None))
-        MainDialog.setWindowIcon(QtGui.QIcon('../res/img/heartnewbig.png'))
+        icon = QtGui.QIcon('res/img/heartnewbig.png')
+        MainDialog.setWindowIcon(icon)
         #self.ipInputBox.setPlaceholderText(_translate("MainDialog", "Host IP", None))
         #self.joinButton.setText(_translate("MainDialog", "Join", None))
         self.voteSkip.setText(_translate("MainDialog", "Vote Skip", None))

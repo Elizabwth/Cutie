@@ -3,11 +3,15 @@ import sys
 import time
 import json
 import threading
+import os
+lib_path = os.path.abspath('src/')
+sys.path.append(lib_path)
+
 import gdata
 import gdata.youtube 
 import gdata.youtube.service
-from qtui import Ui_MainDialog
 
+from qtui import Ui_MainDialog
 from utils import *
 from joindialog import *
 from player import Player
@@ -22,7 +26,8 @@ class User(QtGui.QListWidgetItem):
 
         self.setText(user_name)
         self.setToolTip(user_name)
-        self.setIcon(QtGui.QIcon(r"../res/img/user.png"))
+        uicon = QtGui.QIcon("res/img/user.png")
+        self.setIcon(uicon)
 
 class Video(QtGui.QListWidgetItem):
     def __init__(self, ytid, title, added_by, parent=None):
@@ -32,7 +37,8 @@ class Video(QtGui.QListWidgetItem):
         self.added_by = added_by
         
         self.setText(title)
-        self.setIcon(QtGui.QIcon(r"../res/img/youtube.png"))
+        yticon = QtGui.QIcon("res/img/youtube.png")
+        self.setIcon(yticon)
 
         if ytid == title:
             self.setText('Retreiving title of "'+ytid+'."')
@@ -65,15 +71,16 @@ class MainForm(QtGui.QWidget):
         self.ui.ytWebView.page().setNetworkAccessManager(adManager)
 
         self.ui.ytWebView.settings().setAttribute(QtWebKit.QWebSettings.PluginsEnabled, True) 
-        self.ui.ytWebView.setUrl(QtCore.QUrl('../res/docs/index.html'))
+        url = QtCore.QUrl('res/docs/index.html')
+        self.ui.ytWebView.setUrl(url)
 
         self.player = Player()
         self.ui.ytWebView.loadFinished.connect(self.web_loadFinished)
 
         self.player.videoOver.connect(self.play_next) # play the next video function
-        self.player.videoCued.connect(self.transmit_state)
-        self.player.videoPlaying.connect(self.transmit_state)
-        self.player.videoPaused.connect(self.transmit_state)
+        #self.player.videoCued.connect(self.transmit_state)
+        #self.player.videoPlaying.connect(self.transmit_state)
+        #self.player.videoPaused.connect(self.transmit_state)
 
         self.ui.videoLineURL.returnPressed.connect(self.add_to_queue)
         self.ui.voteSkip.clicked.connect(self.print_current_time_and_state)
@@ -126,6 +133,7 @@ class MainForm(QtGui.QWidget):
         self.client.queue_signal.sig.connect(self.populate_queue)
 
         self.client.queue_request_signal.sig.connect(self.send_queue)
+        self.client.sync_request_signal.sig.connect(self.transmit_state)
 
     def populate_users(self, users):
         self.ui.userList.clear()
@@ -142,8 +150,8 @@ class MainForm(QtGui.QWidget):
         if len(self.ui.ytQueue)==0: 
             return
 
-        cbicon = QtGui.QIcon(r"../res/img/clipboard.png")
-        ericon = QtGui.QIcon(r"../res/img/eraser.png")
+        cbicon = QtGui.QIcon(r"res/img/clipboard.png")
+        ericon = QtGui.QIcon(r"res/img/eraser.png")
 
         menu         = QtGui.QMenu(self.ui.ytQueue)
 

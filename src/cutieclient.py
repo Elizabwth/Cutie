@@ -25,6 +25,9 @@ class UsersSignal(QtCore.QObject):
 class QueueRequestSignal(QtCore.QObject):
     sig = QtCore.pyqtSignal()
 
+class SyncRequestSignal(QtCore.QObject):
+    sig = QtCore.pyqtSignal()
+
 class CutieClient(QtCore.QThread):
     def __init__(self, host, port, name, parent=None):
         QtCore.QThread.__init__(self, parent)
@@ -44,6 +47,7 @@ class CutieClient(QtCore.QThread):
         self.users_signal       = UsersSignal()
 
         self.queue_request_signal = QueueRequestSignal()
+        self.sync_request_signal = SyncRequestSignal()
 
     def run(self):
         while True:
@@ -56,6 +60,7 @@ class CutieClient(QtCore.QThread):
             self.users_handle(data)
 
             self.queue_request_handle(data)
+            self.sync_request_handle(data)
 
             if not data:
                 break
@@ -97,8 +102,16 @@ class CutieClient(QtCore.QThread):
         if data.startswith('{"queue_request"}'):
             self.queue_request_signal.sig.emit()
 
+    def sync_request_handle(self, data):
+        if data.startswith('{"sync_request"}'):
+            self.sync_request_signal.sig.emit()
+
     def send_chat(self, message):
         data = '{"chat":{"name":"'+self.name+'","message":"'+message+'"}}'
+        self.clientsocket.send(data)
+
+    def vote_skip(self):
+        data = '{"vote_skip"}'
         self.clientsocket.send(data)
 
 if __name__ == '__main__':

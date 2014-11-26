@@ -8,8 +8,6 @@ import json
 
 from PyQt4 import QtCore
 
-from utils import *
-
 class Tick(QtCore.QThread):
     def __init__(self, parent=None):
         QtCore.QThread.__init__(self, parent)
@@ -97,7 +95,12 @@ class CutieServer(QtCore.QThread):
 
     def tick(self):
         if len(self.client_threads) > 0:
+            self.client_threads[0].request_sync()
+            time.sleep(1)
+
             self.client_threads[0].request_queue()
+            time.sleep(1)
+            
             self.broadcast_users()
 
 class ClientThread(QtCore.QThread):
@@ -147,6 +150,9 @@ class ClientThread(QtCore.QThread):
 
     def request_queue(self):
         self.socket.send('{"queue_request"}')
+
+    def request_sync(self):
+        self.socket.send('{"sync_request"}')
 
 if __name__ == "__main__":
     cs = CutieServer()
