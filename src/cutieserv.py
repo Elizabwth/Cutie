@@ -18,7 +18,7 @@ class Tick(QtCore.QThread):
 
     def run(self):
         while 1:
-            time.sleep(5)
+            time.sleep(1)
             self.server.tick()
         self.terminate()
 
@@ -86,6 +86,7 @@ class CutieServer(QtCore.QThread):
 
         # dump json to string
         self.users_json = json.dumps(data)
+        self.users_json += "\n"
         for thread in self.client_threads:
             thread.send_packet(self.users_json)
 
@@ -122,37 +123,38 @@ class ClientThread(QtCore.QThread):
                 data = 'None'
                 self.serv.disconnect_client(self)
 
-            # handle setting of thread's user name
-            if data.startswith('{"join_request"'):
-                result = json.loads(data)
-                self.name = result["join_request"]["name"]
-
-            # handle incoming chats
-            if data.startswith('{"chat"'):
-                self.serv.broadcast_chat(data)
-
-            # handle sending data to all clients other than the orchestrator (first user)
-            if (len(self.serv.client_threads) > 0):
-                if ((self == self.serv.client_threads[0]) and data.startswith('{"sync"')):
-                    self.serv.broadcast_sync(data)
-                if ((self == self.serv.client_threads[0]) and data.startswith('{"queue"')):
-                    self.serv.broadcast_queue(data)
-            
             if not data or data == 'None':
                 break
             else:
                 print "(ClientThread) recv: "+ data
-    
+
+            for line in data.split("\n"):
+                # handle setting of thread's user name
+                if data.startswith('{"join_request"'):
+                    result = json.loads(data)
+                    self.name = result["join_request"]["name"]
+
+                # handle incoming chats
+                if data.startswith('{"chat"'):
+                    self.serv.broadcast_chat(data)
+
+                # handle sending data to all clients other than the orchestrator (first user)
+                if (len(self.serv.client_threads) > 0):
+                    if ((self == self.serv.client_threads[0]) and data.startswith('{"sync"')):
+                        self.serv.broadcast_sync(data)
+                    if ((self == self.serv.client_threads[0]) and data.startswith('{"queue"')):
+                        self.serv.broadcast_queue(data)
+            
         self.socket.close()
 
     def send_packet(self, data):
         self.socket.send(data)
 
     def request_queue(self):
-        self.socket.send('{"queue_request"}')
+        self.socket.send('{"queue_request"}\n')
 
     def request_sync(self):
-        self.socket.send('{"sync_request"}')
+        self.socket.send('{"sync_request"}\n')
 
 if __name__ == "__main__":
     cs = CutieServer()

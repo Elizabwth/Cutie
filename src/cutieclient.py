@@ -38,7 +38,7 @@ class CutieClient(QtCore.QThread):
         self.clientsocket = socket(AF_INET, SOCK_STREAM)
         self.clientsocket.connect(addr)
 
-        info = '{"join_request":{"name":"'+name+'"}}'
+        info = '{"join_request":{"name":"'+name+'"}}\n'
         self.clientsocket.send(info)
 
         self.vid_update_signal  = VidUpdateSignal()
@@ -53,19 +53,19 @@ class CutieClient(QtCore.QThread):
         while True:
             data = self.clientsocket.recv(1024)
             data = str(data)
-
-            self.incoming_chat_handle(data)
-            self.video_update_handle(data)
-            self.queue_handle(data)
-            self.users_handle(data)
-
-            self.queue_request_handle(data)
-            self.sync_request_handle(data)
-
             if not data:
                 break
             else:
                 print "client recv " + data
+
+            for line in data.split("\n"):
+                self.incoming_chat_handle(line)
+                self.video_update_handle(line)
+                self.queue_handle(line)
+                self.users_handle(line)
+
+                self.queue_request_handle(line)
+                self.sync_request_handle(line)
 
         self.clientsocket.close()
 
@@ -107,11 +107,11 @@ class CutieClient(QtCore.QThread):
             self.sync_request_signal.sig.emit()
 
     def send_chat(self, message):
-        data = '{"chat":{"name":"'+self.name+'","message":"'+message+'"}}'
+        data = '{"chat":{"name":"'+self.name+'","message":"'+message+'"}}\n'
         self.clientsocket.send(data)
 
     def vote_skip(self):
-        data = '{"vote_skip"}'
+        data = '{"vote_skip"}\n'
         self.clientsocket.send(data)
 
 if __name__ == '__main__':
