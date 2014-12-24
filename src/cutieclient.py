@@ -59,13 +59,16 @@ class CutieClient(QtCore.QThread):
                 print "client recv " + data
 
             for line in data.split("\n"):
-                self.incoming_chat_handle(line)
-                self.video_update_handle(line)
-                self.queue_handle(line)
-                self.users_handle(line)
+                try:
+                    self.incoming_chat_handle(line)
+                    self.video_update_handle(line)
+                    self.queue_handle(line)
+                    self.users_handle(line)
 
-                self.queue_request_handle(line)
-                self.sync_request_handle(line)
+                    self.queue_request_handle(line)
+                    self.sync_request_handle(line)
+                except:
+                    print "Broken packet, ignoring: '" + line + "'"
 
         self.clientsocket.close()
 
