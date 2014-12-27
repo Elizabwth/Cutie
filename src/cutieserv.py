@@ -130,20 +130,20 @@ class ClientThread(QtCore.QThread):
 
             for line in data.split("\n"):
                 # handle setting of thread's user name
-                if data.startswith('{"join_request"'):
-                    result = json.loads(data)
+                if line.startswith('{"join_request"'):
+                    result = json.loads(line)
                     self.name = result["join_request"]["name"]
 
                 # handle incoming chats
-                if data.startswith('{"chat"'):
-                    self.serv.broadcast_chat(data)
+                if line.startswith('{"chat"'):
+                    self.serv.broadcast_chat(line)
 
                 # handle sending data to all clients other than the orchestrator (first user)
                 if (len(self.serv.client_threads) > 0):
-                    if ((self == self.serv.client_threads[0]) and data.startswith('{"sync"')):
-                        self.serv.broadcast_sync(data)
-                    if ((self == self.serv.client_threads[0]) and data.startswith('{"queue"')):
-                        self.serv.broadcast_queue(data)
+                    if ((self == self.serv.client_threads[0]) and line.startswith('{"sync"')):
+                        self.serv.broadcast_sync(line)
+                    if ((self == self.serv.client_threads[0]) and line.startswith('{"queue"')):
+                        self.serv.broadcast_queue(line)
             
         self.socket.close()
 
