@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 from PyQt4 import QtWebKit, QtGui, QtCore, QtGui
 import sys
 import time
@@ -241,6 +243,7 @@ class MainForm(QtGui.QWidget):
 
     def send_queue(self):
         data = json.dumps(self.construct_queue())
+        data += "\n"
         self.client.clientsocket.send(data)
 
     # --- FROM SERVER ---
