@@ -170,4 +170,3 @@ class Ui_MainDialog(object):
             </body></html>" % "<span>...</span>", None))
         self.chatBoxInput.setPlaceholderText(_translate("MainDialog", "Enter message here", None))
         #self.playlistLabel.setText(_translate("MainDialog", "Playlist", None))
-

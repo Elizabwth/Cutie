@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from PyQt4 import QtWebKit, QtGui, QtCore, QtGui
+from PyQt4 import QtWebKit, QtGui, QtCore, QtGui, uic
 import sys
 import time
 import json
@@ -13,6 +13,7 @@ import gdata
 import gdata.youtube 
 import gdata.youtube.service
 
+import qtui
 from qtui import Ui_MainDialog
 from utils import *
 from joindialog import *
@@ -80,9 +81,6 @@ class MainForm(QtGui.QWidget):
         self.ui.ytWebView.loadFinished.connect(self.web_loadFinished)
 
         self.player.videoOver.connect(self.play_next) # play the next video function
-        #self.player.videoCued.connect(self.transmit_state)
-        #self.player.videoPlaying.connect(self.transmit_state)
-        #self.player.videoPaused.connect(self.transmit_state)
 
         self.ui.videoLineURL.returnPressed.connect(self.add_to_queue)
         self.ui.voteSkip.clicked.connect(self.print_current_time_and_state)
@@ -108,7 +106,7 @@ class MainForm(QtGui.QWidget):
         self.dialog.ui = Ui_JoinDialog()
         self.dialog.ui.setupUi(self.dialog)
 
-        self.dialog.ui.addressInput.setText("localhost") # debug
+        self.dialog.ui.addressInput.setText("107.170.202.133") # debug
         self.dialog.ui.nameInput.setText("Lizzy") # debug
         self.dialog.ui.portInput.setText("55567") # debug
 
@@ -192,16 +190,16 @@ class MainForm(QtGui.QWidget):
 
     # ----- STATE FUNCTIONS -----
     def transmit_state(self):
-        data = '{"sync":{"id":"'+self.player.ID+'","state":'+str(self.player.state)+',"time":'+str(self.player.time)+'}}'
+        data = '{"sync":{"id":"'+self.player.ID+'","state":'+str(self.player.state)+',"time":'+str(self.player.time)+'}}\n'
         self.client.clientsocket.send(data)
 
     def client_state(self, video_id, time, state):
-        self.print_current_time_and_state()
-        print video_id, time, state
+        #self.print_current_time_and_state()
 
         # Need to implement a play from (id, time) function as well as 
         # pause and whatever.
-        if self.player.time < time-1 or self.player.time > time+1:
+        # force sync if player is behind or ahead 5 seconds
+        if self.player.time < time-5 or self.player.time > time+5:
             print self.player.time, time
             self.ui.ytWebView.page().mainFrame().evaluateJavaScript("player.seekTo("+str(time)+",true)")
         if video_id != self.player.ID:
@@ -299,6 +297,38 @@ class MainForm(QtGui.QWidget):
 
         return QtGui.QWidget.eventFilter(self, source, event)
 
+class Main(QtGui.QMainWindow):
+    def __init__(self):
+        super(Main, self).__init__()
+        self.ui = uic.loadUi('ui/cutierework.ui', self)
+
+        ### webView setup ###
+        self.ui.webView.setPage(qtui.WebPage())
+        adManager = adblocker.AdblockerNetworkManager()
+        self.ui.webView.page().setNetworkAccessManager(adManager)
+        self.ui.webView.settings().setAttribute(QtWebKit.QWebSettings.PluginsEnabled, True) 
+        self.ui.webView.setUrl(QtCore.QUrl('res/docs/index.html'))
+
+        ### queueList setup ###
+
+        ### videoInput setup ###
+
+        ### skipButton setup ###
+
+        ### userList setup ###
+
+        ### chatText setup ###
+        self.ui.chatText.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+
+        ### chatInput setup ###
+
+        ### function handler, client ###
+        # client = Client()...
+        # handler = Handler(ui, client)
+        
+        # (inside the handsler class) self.ui.chatBoxInput.returnPressed.connect(handler.send_chat)
+        # etc...
+
 if __name__ == '__main__':
     try:
         server = cutieserv.CutieServer()
@@ -306,6 +336,8 @@ if __name__ == '__main__':
     except: pass
 
     app = QtGui.QApplication(sys.argv)
-    myapp = MainForm()
+    #myapp = MainForm()
+    #myapp.show()
+    myapp = Main()
     myapp.show()
     sys.exit(app.exec_())
