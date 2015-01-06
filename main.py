@@ -60,7 +60,6 @@ class Video(QtGui.QListWidgetItem):
             self.setText(self.title)
             self.setToolTip(self.title+"\nAdded by %s." % (self.added_by))
         except:
-            self.setText("Retrying to retreive title...")
             self.t1 = threading.Thread(target=self.set_video_title)
             self.t1.start()
 
@@ -301,6 +300,8 @@ class Main(QtGui.QMainWindow):
     def __init__(self):
         super(Main, self).__init__()
         self.ui = uic.loadUi('ui/cutierework.ui', self)
+        
+        self.player = Player()
 
         ### webView setup ###
         self.ui.webView.setPage(qtui.WebPage())
@@ -308,8 +309,13 @@ class Main(QtGui.QMainWindow):
         self.ui.webView.page().setNetworkAccessManager(adManager)
         self.ui.webView.settings().setAttribute(QtWebKit.QWebSettings.PluginsEnabled, True) 
         self.ui.webView.setUrl(QtCore.QUrl('res/docs/index.html'))
+        self.ui.webView.loadFinished.connect(self.webLoadFinished)
 
         ### queueList setup ###
+        #self.ui.queueList.setDragDropMode(QtGui.QAbstractItemView.InternalMove)
+        self.ui.queueList.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.ui.queueList.customContextMenuRequested.connect(self.queueContextMenu)
+        self.ui.queueList.dropEvent = self.queueDropEvent
 
         ### videoInput setup ###
 
@@ -318,7 +324,6 @@ class Main(QtGui.QMainWindow):
         ### userList setup ###
 
         ### chatText setup ###
-        self.ui.chatText.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
 
         ### chatInput setup ###
 
@@ -328,6 +333,44 @@ class Main(QtGui.QMainWindow):
         
         # (inside the handsler class) self.ui.chatBoxInput.returnPressed.connect(handler.send_chat)
         # etc...
+
+        ## also add handlers for adding videos that may be restricted in countries
+        ## handler can behave by checking the client's IP and changing the background
+        ## of the list widget item to red and adding an X or some little picture next 
+        ## to it
+        ## https://developers.google.com/youtube/2.0/developers_guide_protocol_api_query_parameters#restrictionsp
+
+        ## handler for non-embedable videos can be easy, just don't bother adding it
+        ## http://stackoverflow.com/questions/3899387/how-do-i-use-the-youtube-api-to-check-if-a-video-is-embeddable
+
+    def webLoadFinished(self):
+        self.ui.webView.page().mainFrame().addToJavaScriptWindowObject('main', self.player)
+
+    def queueDropEvent(self, event):
+        QtGui.QListWidget.dropEvent(self.ui.queueList, event)
+        if event.isAccepted():
+            source = event.source()
+            dropped = source.currentItem()
+            index = source.row(dropped)
+            print "Index = " + str(index)
+
+    def queueContextMenu(self, position):
+        if len(self.ui.queueList) == 0: 
+            return
+        cbicon = QtGui.QIcon(r"res/img/clipboard.png")
+        ericon = QtGui.QIcon(r"res/img/eraser.png")
+
+        menu         = QtGui.QMenu(self.ui.queueList)
+        removeAction = menu.addAction(ericon, "Remove from queue")
+        copyAction   = menu.addAction(cbicon, "Copy URL to clipboard")
+        action       = menu.exec_(self.ui.queueList.mapToGlobal(position))
+
+        if action == removeAction:
+            item = self.ui.queueList.currentItem()
+            self.ui.queueList.takeItem(self.ui.queueList.row(item))
+            del item
+        elif action == copyAction:
+            pass
 
 if __name__ == '__main__':
     try:
