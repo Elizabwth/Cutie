@@ -27,11 +27,13 @@ class Server:
     def __init__(self):
         self.users = []
         self.queue = []
+        self.sync_data = {}
 
     def run(self):
         def tick():
             while True:
-                time.sleep(1)
+                time.sleep(0.25)
+                self.sync_users_with_curator()
 
         thread = threading.Thread(target=tick)
         thread.setDaemon(True)
@@ -42,6 +44,28 @@ class Server:
 
     def get_users(self):
         return self.users
+
+    def get_sync_data(self):
+        return self.sync_data
+
+    def set_sync_data(self, vid_id, time, state, queue_index):
+        self.sync_data['vid_id']      = vid_id
+        self.sync_data['time']        = time
+        self.sync_data['state']       = state
+        self.sync_data['queue_index'] = queue_index
+        return self.sync_data
+
+    def sync_users_with_curator(self):
+        # get sync data from curator
+        for user in self.users:
+            if user['group'] == 'curator':
+                user['callback_handler'].sync_data_requested()
+                break
+
+        # set sync data received from curator for all non-curators
+        for user in self.users:
+            if user['group'] != 'curator' and self.sync_data != {}:
+                user['callback_handler'].sync_player(self.sync_data)
 
     def broadcast_message(self, name, message):
         pass

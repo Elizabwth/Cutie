@@ -7,7 +7,7 @@ class CallbackHandler:
         self.user_disconnected_listener = None
         self.video_added_listener = None
         self.video_removed_listener = None
-        self.sync_listener = None
+        self.sync_data_requested_listener = None
 
     def set_user_connected_listener(self, listener):
         self.user_connected_listener = listener
@@ -21,8 +21,8 @@ class CallbackHandler:
     def set_video_removed_listener(self, listener):
         self.video_removed_listener = listener
 
-    def set_sync_listener(self, listener):
-        self.sync_listener = listener
+    def set_sync_data_requested_listener(self, listener):
+        self.sync_data_requested_listener = listener
 
     @Pyro4.callback
     def user_connected(self, user):
@@ -49,7 +49,7 @@ class CallbackHandler:
             self.video_removed_listener(index)
 
     @Pyro4.callback
-    def sync(self, data):
-        print("sync callback")
-        if self.sync_listener:
-            self.sync_listener(data)
+    def sync(self):
+        print("sync_data_requested callback")
+        if self.sync_data_requested_listener:
+            self.sync_data_requested_listener()
