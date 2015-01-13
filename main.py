@@ -27,7 +27,7 @@ class WebPage(QtWebKit.QWebPage):
 class Main(QtGui.QMainWindow):
     def __init__(self):
         super(Main, self).__init__()
-        self.ui = uic.loadUi('ui/cutierework.ui', self)
+        self.ui = uic.loadUi('ui/main.ui', self)
         
         self.player = Player()
 
