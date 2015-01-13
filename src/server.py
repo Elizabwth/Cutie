@@ -17,9 +17,6 @@ import Pyro4.core
 import Pyro4.naming
 import Pyro4.socketutil
 
-# start nameserver:
-# python -m Pyro4.naming
-
 import logging
 
 logging.basicConfig(stream=sys.stderr, format="[%(asctime)s,%(name)s,%(levelname)s] %(message)s")
@@ -32,7 +29,6 @@ class Server:
         self.queue = []
 
     def run(self):
-
         def tick():
             while True:
                 time.sleep(1)
@@ -68,7 +64,6 @@ class Server:
         index = 0
         user_found = False
         for i, user in enumerate(self.users):
-            print(user['name'])
             if user['name'] == name:
                 self.users.remove(user)
                 index = i
@@ -78,6 +73,7 @@ class Server:
         if user_found:
             for user in self.users:
                 user['callback_handler'].user_disconnected(index)
+
             print("User disconnect at index: "+str(index))
 
     @Pyro4.oneway
@@ -110,7 +106,9 @@ class Server:
         for user in self.users:
             user['callback_handler'].video_removed(index)
 
-if __name__ == '__main__':
+        print("Video removed at index: "+str(index))
+
+def main():
     server = Server()
 
     daemon = Pyro4.Daemon(host=socket.gethostbyname(socket.gethostname()), port=8080)
@@ -119,3 +117,6 @@ if __name__ == '__main__':
     server.run()
     print("Server running, uri = "+str(server_uri))
     daemon.requestLoop()
+
+if __name__ == '__main__':
+    main()
