@@ -78,12 +78,12 @@ class Main(QtGui.QMainWindow):
         self.user_name = "Lizzy"
         self.user_group = "curator"
 
-        self.showConnectDialog()
+        self.show_connect_dialog()
 
     def webLoadFinished(self):
         self.ui.webView.page().mainFrame().addToJavaScriptWindowObject('main', self.player)
 
-    def showConnectDialog(self):
+    def show_connect_dialog(self):
         dialog = QtGui.QDialog(self, QtCore.Qt.WindowSystemMenuHint | QtCore.Qt.WindowTitleHint)
         dialog.ui = uic.loadUi('ui/connectdialog.ui', dialog)
 
@@ -166,7 +166,7 @@ class Main(QtGui.QMainWindow):
     def sync(self, data):
         pass
 
-    def closeEvent(self,event):
+    def closeEvent(self, event):
         reply = QtGui.QMessageBox.question(self, 
                                            "Cutie", 
                                            "Quit Cutie?", 
