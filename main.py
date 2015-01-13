@@ -61,15 +61,15 @@ class Main(QtGui.QMainWindow):
 
         self.proxy = Pyro4.Proxy(uri)
 
-        self.callback_handler = handler.CallbackHandler()
-        self.callback_handler.set_user_connected_listener(self.user_connected)
-        self.callback_handler.set_user_disconnected_listener(self.user_disconnected)
-        self.callback_handler.set_video_added_listener(self.video_added)
-        self.callback_handler.set_video_removed_listener(self.video_removed)
-        self.callback_handler.set_sync_listener(self.sync)
+        self.handler = handler.CallbackHandler()
+        self.handler.set_user_connected_listener(self.user_connected)
+        self.handler.set_user_disconnected_listener(self.user_disconnected)
+        self.handler.set_video_added_listener(self.video_added)
+        self.handler.set_video_removed_listener(self.video_removed)
+        self.handler.set_sync_listener(self.sync)
 
         daemon = Pyro4.core.Daemon()
-        daemon.register(self.callback_handler)
+        daemon.register(self.handler)
 
         thread = threading.Thread(target=daemon.requestLoop)
         thread.setDaemon(True)
@@ -128,7 +128,7 @@ class Main(QtGui.QMainWindow):
 
     ### SERVER CALLS ###
     def connect(self):
-        self.proxy.connect_user(self.user_name, self.user_group, self.callback_handler)
+        self.proxy.connect_user(self.user_name, self.user_group, self.handler)
 
     def disconnect(self):
         self.proxy.disconnect_user(self.user_name)
