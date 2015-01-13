@@ -6,7 +6,7 @@ def clock_from_seconds(seconds):
         s = "0"+str(s)
     return str(m)+":"+str(s)
 
-def get_vid_id(url): 
+def get_video_id(url): 
     url = str(url)
     url = url.replace('feature=player_embedded&', '') 
     idx = url.find("?v=")
@@ -22,3 +22,15 @@ def get_vid_id(url):
             if idx <0:
                 return "xxx"
     return vid_id
+
+# http://stackoverflow.com/questions/1823058/how-to-print-number-with-commas-as-thousands-separators
+def intWithCommas(x):
+    if type(x) not in [type(0), type(0L)]:
+        raise TypeError("Parameter must be an integer.")
+    if x < 0:
+        return '-' + intWithCommas(-x)
+    result = ''
+    while x >= 1000:
+        x, r = divmod(x, 1000)
+        result = ",%03d%s" % (r, result)
+    return "%d%s" % (x, result)
