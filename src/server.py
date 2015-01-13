@@ -43,7 +43,7 @@ class Server:
     def get_users(self):
         return self.users
 
-    def broadcast_chat_message(self, name, message):
+    def broadcast_message(self, name, message):
         pass
 
     @Pyro4.oneway
@@ -111,7 +111,7 @@ class Server:
 def main():
     server = Server()
 
-    daemon = Pyro4.Daemon(host=socket.gethostbyname(socket.gethostname()), port=8080)
+    daemon = Pyro4.Daemon(host = socket.gethostbyname(socket.gethostname()), port = 8080)
     server_uri = daemon.register(server, "cutie")
 
     server.run()
