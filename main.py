@@ -55,6 +55,7 @@ class Main(QtGui.QMainWindow):
         ### chatText setup ###
 
         ### chatInput setup ###
+        self.ui.chatInput.returnPressed.connect(self.send_message)
 
         ### RO Proxy ###   
         uri = "PYRO:cutie@10.0.1.12:8080"
@@ -66,7 +67,8 @@ class Main(QtGui.QMainWindow):
         self.handler.set_user_disconnected_listener(self.user_disconnected)
         self.handler.set_video_added_listener(self.video_added)
         self.handler.set_video_removed_listener(self.video_removed)
-        self.handler.set_sync_listener(self.sync)
+        self.handler.set_sync_data_requested_listener(self.sync_data_requested)
+        self.handler.set_message_received_listener(self.message_received)
 
         daemon = Pyro4.core.Daemon()
         daemon.register(self.handler)
@@ -128,6 +130,9 @@ class Main(QtGui.QMainWindow):
 
     ### SERVER CALLS ###
     def connect(self):
+        for user in self.proxy.get_users():
+            self.ui.userList.addItem(user['name'])
+
         self.proxy.connect_user(self.user_name, self.user_group, self.handler)
 
     def disconnect(self):
@@ -137,6 +142,15 @@ class Main(QtGui.QMainWindow):
         url = str(self.ui.videoInput.text())
         self.proxy.add_video(url, self.user_name)
         self.ui.videoInput.clear()
+
+    def send_message(self):
+        text = str(self.ui.chatInput.text())
+        text = text.replace('"', "&quot;") 
+        self.proxy.broadcast_message(self.user_name, text)
+        self.ui.chatInput.setText("")
+
+    def sync_data_with_curator(self, data):
+        pass
 
     ### CALLBACKS ###
     def user_connected(self, user):
@@ -163,7 +177,11 @@ class Main(QtGui.QMainWindow):
     def video_removed(self, index):
         self.ui.queueList.takeItem(index)
 
-    def sync(self, data):
+    def message_received(self, name, message):
+        self.ui.chatText.append("<b>"+name+":</b> "+message)
+        self.ui.chatText.verticalScrollBar().setValue(self.ui.chatText.verticalScrollBar().maximum())
+
+    def sync_data_requested(self):
         pass
 
     def closeEvent(self, event):

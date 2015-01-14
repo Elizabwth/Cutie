@@ -32,7 +32,7 @@ class Server:
     def run(self):
         def tick():
             while True:
-                time.sleep(0.25)
+                time.sleep(0.5)
                 self.sync_users_with_curator()
 
         thread = threading.Thread(target=tick)
@@ -48,13 +48,6 @@ class Server:
     def get_sync_data(self):
         return self.sync_data
 
-    def set_sync_data(self, vid_id, time, state, queue_index):
-        self.sync_data['vid_id']      = vid_id
-        self.sync_data['time']        = time
-        self.sync_data['state']       = state
-        self.sync_data['queue_index'] = queue_index
-        return self.sync_data
-
     def sync_users_with_curator(self):
         # get sync data from curator
         for user in self.users:
@@ -67,8 +60,12 @@ class Server:
             if user['group'] != 'curator' and self.sync_data != {}:
                 user['callback_handler'].sync_player(self.sync_data)
 
+    @Pyro4.oneway
     def broadcast_message(self, name, message):
-        pass
+        for user in self.users:
+            user['callback_handler'].message_received(name, message)
+
+        print("<"+name+"> "+message)
 
     @Pyro4.oneway
     def connect_user(self, name, group, callback_handler):
@@ -131,6 +128,13 @@ class Server:
             user['callback_handler'].video_removed(index)
 
         print("Video removed at index: "+str(index))
+
+    @Pyro4.oneway
+    def set_sync_data(self, vid_id, time, state, queue_index):
+        self.sync_data['vid_id']      = vid_id
+        self.sync_data['time']        = time
+        self.sync_data['state']       = state
+        self.sync_data['queue_index'] = queue_index
 
 def main():
     server = Server()
