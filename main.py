@@ -57,11 +57,7 @@ class Main(QtGui.QMainWindow):
         ### chatInput setup ###
         self.ui.chatInput.returnPressed.connect(self.send_message)
 
-        ### RO Proxy ###   
-        uri = "PYRO:cutie@10.0.1.12:8080"
-
-        self.proxy = Pyro4.Proxy(uri)
-
+        ### Callback Handler ###
         self.handler = handler.CallbackHandler()
         self.handler.set_user_connected_listener(self.user_connected)
         self.handler.set_user_disconnected_listener(self.user_disconnected)
@@ -77,62 +73,35 @@ class Main(QtGui.QMainWindow):
         thread.setDaemon(True)
         thread.start()
 
-        self.user_name = "Lizzy"
+        ### initial setup ###
+        self.user_name  = "Lizzy"
         self.user_group = "curator"
 
+        self.dialog = None
         self.show_connect_dialog()
-
-    def webLoadFinished(self):
-        self.ui.webView.page().mainFrame().addToJavaScriptWindowObject('main', self.player)
-
-    def show_connect_dialog(self):
-        dialog = QtGui.QDialog(self, QtCore.Qt.WindowSystemMenuHint | QtCore.Qt.WindowTitleHint)
-        dialog.ui = uic.loadUi('ui/connectdialog.ui', dialog)
-
-        dialog.ui.nameInput.setText("Lizzy") # debug
-
-        dialog.ui.okCancle.accepted.connect(self.connect)
-        dialog.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-        dialog.show()
-
-        # move proxy creation into here or into the connect function?
-
-    def queueDropEvent(self, event):
-        QtGui.QListWidget.dropEvent(self.ui.queueList, event)
-        if event.isAccepted():
-            source  = event.source()
-            dropped = source.currentItem()
-            index   = source.row(dropped)
-            print "Index = " + str(index)
-
-    def queueContextMenu(self, position):
-        if len(self.ui.queueList) == 0: 
-            return
-
-        cbicon = QtGui.QIcon(r"res/img/clipboard.png")
-        ericon = QtGui.QIcon(r"res/img/eraser.png")
-
-        menu         = QtGui.QMenu(self.ui.queueList)
-        removeAction = menu.addAction(ericon, "Remove from queue")
-        copyAction   = menu.addAction(cbicon, "Copy URL to clipboard")
-        action       = menu.exec_(self.ui.queueList.mapToGlobal(position))
-
-        item = self.ui.queueList.currentItem()
-        item_index = self.ui.queueList.row(item)
-        if action == removeAction:
-            self.proxy.remove_video(item_index)
-            del item
-        elif action == copyAction:
-            qi = self.proxy.get_queue()[item_index]
-            clipboard = QtGui.QApplication.clipboard()
-            clipboard.clear(mode=clipboard.Clipboard)
-            clipboard.setText("http://youtu.be/"+qi['vid_id'], mode=clipboard.Clipboard)
 
     ### SERVER CALLS ###
     def connect(self):
+        ## RO Proxy ##
+        name           = str(self.dialog.ui.nameInput.text())
+        ip             = str(self.dialog.ui.addressInput.text())
+        port           = str(self.dialog.ui.portInput.text())
+        uri = "PYRO:cutie@{0}:{1}".format(ip, port) # PYRO:cutie@10.0.1.12:8080
+        self.proxy = Pyro4.Proxy(uri)
+
         for user in self.proxy.get_users():
             self.ui.userList.addItem(user['name'])
 
+        unique = 0
+        for user in self.proxy.get_users():
+            if self.user_name == user['name']:
+                unique += 1
+
+        if unique == 0:
+            self.user_name = name
+        else:
+            self.user_name = name + " ({0})".format(unique)
+        
         self.proxy.connect_user(self.user_name, self.user_group, self.handler)
 
     def disconnect(self):
@@ -183,6 +152,53 @@ class Main(QtGui.QMainWindow):
 
     def sync_data_requested(self):
         pass
+
+    ### UI ###
+    def webLoadFinished(self):
+        self.ui.webView.page().mainFrame().addToJavaScriptWindowObject('main', self.player)
+
+    def queueDropEvent(self, event):
+        QtGui.QListWidget.dropEvent(self.ui.queueList, event)
+        if event.isAccepted():
+            source  = event.source()
+            dropped = source.currentItem()
+            index   = source.row(dropped)
+            print "Index = " + str(index)
+
+    def queueContextMenu(self, position):
+        if len(self.ui.queueList) == 0: 
+            return
+
+        cbicon = QtGui.QIcon(r"res/img/clipboard.png")
+        ericon = QtGui.QIcon(r"res/img/eraser.png")
+
+        menu         = QtGui.QMenu(self.ui.queueList)
+        removeAction = menu.addAction(ericon, "Remove from queue")
+        copyAction   = menu.addAction(cbicon, "Copy URL to clipboard")
+        action       = menu.exec_(self.ui.queueList.mapToGlobal(position))
+
+        item = self.ui.queueList.currentItem()
+        item_index = self.ui.queueList.row(item)
+        if action == removeAction:
+            self.proxy.remove_video(item_index)
+            del item
+        elif action == copyAction:
+            qi = self.proxy.get_queue()[item_index]
+            clipboard = QtGui.QApplication.clipboard()
+            clipboard.clear(mode = clipboard.Clipboard)
+            clipboard.setText("http://youtu.be/"+qi['vid_id'], mode = clipboard.Clipboard)
+
+    def show_connect_dialog(self):
+        self.dialog = QtGui.QDialog(self, QtCore.Qt.WindowSystemMenuHint | QtCore.Qt.WindowTitleHint)
+        self.dialog.ui = uic.loadUi('ui/connectdialog.ui', self.dialog)
+
+        self.dialog.ui.nameInput.setText("Lizzy") # debug
+        self.dialog.ui.addressInput.setText("10.0.1.12") # debug
+        self.dialog.ui.portInput.setText("8080")
+
+        self.dialog.ui.okCancle.accepted.connect(self.connect)
+        self.dialog.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+        self.dialog.show()
 
     def closeEvent(self, event):
         reply = QtGui.QMessageBox.question(self, 
