@@ -63,3 +63,18 @@ class CallbackHandler:
         print("message_received callback")
         if self.message_received_listener:
             self.message_received_listener(name, message)
+
+class PlaybackHandler:
+	def __init__(self):
+		self.play_listener = None
+		self.pause_listener = None
+
+	def play(self, vid_id, time):
+		print("play callback")
+		if self.play_listener:
+			self.play_listener(vid_id, time)
+
+	def pause(self, vid_id, time):
+		print("pause callback")
+		if self.pause_listener:
+			self.pause_listener(vid_id, time)
