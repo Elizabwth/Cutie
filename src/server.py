@@ -130,6 +130,16 @@ class Server:
         print("Video removed at index: "+str(index))
 
     @Pyro4.oneway
+    def sort_queue(self, initial, dropped):
+        self.queue[initial], self.queue[dropped] = self.queue[dropped], self.queue[initial]
+
+        for user in self.users:
+            if user['group'] != 'curator':
+                user['callback_handler'].queue_sorted(initial, dropped)
+
+        print("Queue item sorted from row {0} to {1}".format(initial, dropped))
+
+    @Pyro4.oneway
     def set_sync_data(self, vid_id, time, state, queue_index):
         self.sync_data['vid_id']      = vid_id
         self.sync_data['time']        = time

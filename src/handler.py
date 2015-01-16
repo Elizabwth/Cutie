@@ -9,6 +9,7 @@ class CallbackHandler:
         self.video_removed_listener = None
         self.sync_data_requested_listener = None
         self.message_received_listener = None
+        self.queue_sorted_listener = None
 
     def set_user_connected_listener(self, listener):
         self.user_connected_listener = listener
@@ -27,6 +28,9 @@ class CallbackHandler:
 
     def set_message_received_listener(self, listener):
         self.message_received_listener = listener
+
+    def set_queue_sorted_listener(self, listener):
+        self.queue_sorted_listener = listener
 
     @Pyro4.callback
     def user_connected(self, user):
@@ -63,6 +67,12 @@ class CallbackHandler:
         print("message_received callback")
         if self.message_received_listener:
             self.message_received_listener(name, message)
+
+    @Pyro4.callback
+    def queue_sorted(self, initial, dropped):
+        print("queue_sorted callback")
+        if self.queue_sorted_listener:
+            self.queue_sorted_listener(initial, dropped)
 
 class PlaybackHandler:
 	def __init__(self):

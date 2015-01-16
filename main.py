@@ -42,8 +42,8 @@ class Main(QtGui.QMainWindow):
         ### queueList setup ###
         self.ui.queueList.setDragDropMode(QtGui.QAbstractItemView.InternalMove)
         self.ui.queueList.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.ui.queueList.customContextMenuRequested.connect(self.queueContextMenu)
-        self.ui.queueList.dropEvent = self.queueDropEvent
+        self.ui.queueList.customContextMenuRequested.connect(self.queue_context_menu)
+        self.ui.queueList.dropEvent = self.queue_drop_event
 
         ### videoInput setup ###
         self.ui.videoInput.returnPressed.connect(self.add_video)
@@ -65,6 +65,7 @@ class Main(QtGui.QMainWindow):
         self.handler.set_video_removed_listener(self.video_removed)
         self.handler.set_sync_data_requested_listener(self.sync_data_requested)
         self.handler.set_message_received_listener(self.message_received)
+        self.handler.set_queue_sorted_listener(self.queue_sorted)
 
         daemon = Pyro4.core.Daemon()
         daemon.register(self.handler)
@@ -135,7 +136,6 @@ class Main(QtGui.QMainWindow):
     def video_added(self, qi):
         # future point release: create a custom listwidgetitem that contains
         # more info about the video (and possibly a thumbnail?)
-
         title    = qi['title']
         added_by = qi['added_by']
         rating   = str(qi['rating'])[0:4]
@@ -150,6 +150,11 @@ class Main(QtGui.QMainWindow):
     def video_removed(self, index):
         self.ui.queueList.takeItem(index)
 
+    def queue_sorted(self, initial_row, dropped_row):
+        if initial_row != dropped_row:
+            item = self.ui.queueList.takeItem(initial_row)
+            self.ui.queueList.insertItem(dropped_row, item)
+
     def message_received(self, name, message):
         self.ui.chatText.append("<b>"+name+":</b> "+message)
         self.ui.chatText.verticalScrollBar().setValue(self.ui.chatText.verticalScrollBar().maximum())
@@ -161,7 +166,7 @@ class Main(QtGui.QMainWindow):
     def webLoadFinished(self):
         self.ui.webView.page().mainFrame().addToJavaScriptWindowObject('main', self.player)
 
-    def queueDropEvent(self, event):
+    def queue_drop_event(self, event):
         # get inital row of dragged item before continuing
         source        = event.source()
         item          = source.currentItem()
@@ -169,13 +174,14 @@ class Main(QtGui.QMainWindow):
 
         # do the drop action
         QtGui.QListWidget.dropEvent(self.ui.queueList, event)
+
         if event.isAccepted():
-            dropped_item  = source.currentItem()
-            dropped_index = source.row(dropped_item)
+            dropped_index = source.row(item)
+            self.proxy.sort_queue(initial_index, dropped_index)
 
             print "initial index = {0}, dropped index = {1}".format(str(initial_index), str(dropped_index))
 
-    def queueContextMenu(self, position):
+    def queue_context_menu(self, position):
         if len(self.ui.queueList) == 0: 
             return
 
