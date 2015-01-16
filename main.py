@@ -40,7 +40,7 @@ class Main(QtGui.QMainWindow):
         self.ui.webView.loadFinished.connect(self.webLoadFinished)
 
         ### queueList setup ###
-        #self.ui.queueList.setDragDropMode(QtGui.QAbstractItemView.InternalMove)
+        self.ui.queueList.setDragDropMode(QtGui.QAbstractItemView.InternalMove)
         self.ui.queueList.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.ui.queueList.customContextMenuRequested.connect(self.queueContextMenu)
         self.ui.queueList.dropEvent = self.queueDropEvent
@@ -104,6 +104,10 @@ class Main(QtGui.QMainWindow):
         
         self.proxy.connect_user(self.user_name, self.user_group, self.handler)
 
+        self.proxy.add_video("https://www.youtube.com/watch?v=VqB1uoDTdKM", self.user_name) # test
+        self.proxy.add_video("https://www.youtube.com/watch?v=EAdgI8LHPaU", self.user_name) # test
+        self.proxy.add_video("https://www.youtube.com/watch?v=VqB1uoDTdKM", self.user_name) # test
+
     def disconnect(self):
         self.proxy.disconnect_user(self.user_name)
 
@@ -158,12 +162,18 @@ class Main(QtGui.QMainWindow):
         self.ui.webView.page().mainFrame().addToJavaScriptWindowObject('main', self.player)
 
     def queueDropEvent(self, event):
+        # get inital row of dragged item before continuing
+        source        = event.source()
+        item          = source.currentItem()
+        initial_index = source.row(item)
+
+        # do the drop action
         QtGui.QListWidget.dropEvent(self.ui.queueList, event)
         if event.isAccepted():
-            source  = event.source()
-            dropped = source.currentItem()
-            index   = source.row(dropped)
-            print "Index = " + str(index)
+            dropped_item  = source.currentItem()
+            dropped_index = source.row(dropped_item)
+
+            print "initial index = {0}, dropped index = {1}".format(str(initial_index), str(dropped_index))
 
     def queueContextMenu(self, position):
         if len(self.ui.queueList) == 0: 
