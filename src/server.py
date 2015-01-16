@@ -32,7 +32,7 @@ class Server:
     def run(self):
         def tick():
             while True:
-                time.sleep(0.5)
+                time.sleep(1)
                 self.sync_users_with_curator()
 
         thread = threading.Thread(target=tick)

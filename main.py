@@ -160,7 +160,7 @@ class Main(QtGui.QMainWindow):
         self.ui.chatText.verticalScrollBar().setValue(self.ui.chatText.verticalScrollBar().maximum())
 
     def sync_data_requested(self):
-        pass
+        self.proxy.set_sync_data("", 0, 60, 0) # video id, state, time, queue index
 
     ### UI ###
     def webLoadFinished(self):
