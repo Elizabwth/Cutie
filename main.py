@@ -122,22 +122,23 @@ class Main(QtGui.QMainWindow):
     ### SERVER CALLS ###
     def connect(self):
         ## RO Proxy ##
-        name = str(self.dialog.ui.nameInput.text())
-        ip   = str(self.dialog.ui.addressInput.text())
-        port = str(self.dialog.ui.portInput.text())
+        name = str(self.dialog.ui.nameInput.text().toAscii())
+        ip   = str(self.dialog.ui.addressInput.text().toAscii())
+        port = str(self.dialog.ui.portInput.text().toAscii())
 
         uri  = "PYRO:cutie@{0}:{1}".format(ip, port) # PYRO:cutie@10.0.1.12:8080
         self.proxy = Pyro4.Proxy(uri)
 
         users = self.proxy.get_users()[:]
+        queue = self.proxy.get_queue()[:]
 
+        # populate queue and user list
         for user in users:
             self.ui.userList.addItem(user['name'])
-
-        queue = self.proxy.get_queue()[:]
         for qi in queue:
             self.video_added(qi)
 
+        # give a connecting user a unique name
         unique = 0
         for user in users:
             if self.user_name == user['name']:
@@ -161,7 +162,7 @@ class Main(QtGui.QMainWindow):
         self.ui.videoInput.clear()
 
     def send_message(self):
-        text = str(self.ui.chatInput.text())
+        text = str(self.ui.chatInput.text().toAscii())
         text = text.replace('"', "&quot;") 
         self.proxy.broadcast_message(self.user_name, text)
         self.ui.chatInput.setText("")
@@ -196,7 +197,7 @@ class Main(QtGui.QMainWindow):
             self.ui.queueList.insertItem(dropped_row, item)
 
     def message_received(self, name, message):
-        self.ui.chatText.append("<b>"+name+":</b> "+message)
+        self.ui.chatText.append("<b>"+name+"</b>: "+message)
         self.ui.chatText.verticalScrollBar().setValue(self.ui.chatText.verticalScrollBar().maximum())
 
     ### UI ###

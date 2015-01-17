@@ -80,9 +80,10 @@ class Player(object):
         self.web_view.loadFinished.connect(self.web_load_finished)
 
     def cue_video(self, vid_id):
-        self.web_view.page().mainFrame().evaluateJavaScript("player.stopVideo()")
-        self.web_view.page().mainFrame().evaluateJavaScript("player.clearVideo()")
-        self.web_view.page().mainFrame().evaluateJavaScript("player.cueVideoById('"+vid_id+"')")
+        if self.youtube_api.vid_id != vid_id:
+            self.web_view.page().mainFrame().evaluateJavaScript("player.stopVideo()")
+            self.web_view.page().mainFrame().evaluateJavaScript("player.clearVideo()")
+            self.web_view.page().mainFrame().evaluateJavaScript("player.cueVideoById('"+vid_id+"')")
 
     def play(self):
         self.web_view.page().mainFrame().evaluateJavaScript("player.playVideo()")

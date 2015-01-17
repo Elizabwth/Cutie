@@ -183,6 +183,9 @@ p, li { white-space: pre-wrap; }
       <height>171</height>
      </rect>
     </property>
+    <property name="horizontalScrollBarPolicy">
+     <enum>Qt::ScrollBarAlwaysOff</enum>
+    </property>
     <property name="dragDropMode">
      <enum>QAbstractItemView::NoDragDrop</enum>
     </property>
