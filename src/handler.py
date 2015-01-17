@@ -6,7 +6,7 @@ class CallbackHandler(QtCore.QObject):
     	super(CallbackHandler, self).__init__(parent)
 
     user_connected_signal 		= QtCore.pyqtSignal(dict)
-    user_disconnected_signal 	= QtCore.pyqtSignal(dict)
+    user_disconnected_signal 	= QtCore.pyqtSignal(int)
     video_added_signal			= QtCore.pyqtSignal(dict)
     video_removed_signal 		= QtCore.pyqtSignal(int)
 
@@ -21,13 +21,12 @@ class CallbackHandler(QtCore.QObject):
         self.user_connected_signal.emit(user)
 
     @Pyro4.callback
-    def user_disconnected(self, user):
+    def user_disconnected(self, index):
         print("user_disconnected signal")
-        self.user_disconnected_signal.emit(user)
+        self.user_disconnected_signal.emit(index)
 
     @Pyro4.callback
     def video_added(self, qi):
-        print("video_added callback")
         print("video_added signal")
         self.video_added_signal.emit(qi)
 
@@ -43,6 +42,7 @@ class CallbackHandler(QtCore.QObject):
 
     @Pyro4.callback
     def queue_sorted(self, initial, dropped):
+    	print("queue item moved from index {0} to {1}".format(initial, dropped))
         self.queue_sorted_signal.emit(initial, dropped)
 
     @Pyro4.callback
