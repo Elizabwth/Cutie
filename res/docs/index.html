@@ -31,25 +31,12 @@
 				console.log('Player is ready.');
 				console.log(player.getPlayerState());
 
-				// get the current time every second
-				window.setInterval(getCurrentTime, 1000); 
+				// get the current info every half second
+				window.setInterval(getCurrentInfo, 500); 
 				
 				player.setPlaybackQuality('small'); // DISABLE WHEN NOT TESTING
 			}
 
-			function showVideo(vid) {
-				player.clearVideo();
-				console.log(vid);
-				player.cueVideoById(vid);
-				player.playVideo();
-			}
-
-			function clearVideo() {
-				console.log("Clearing video.");
-				player.stopVideo();
-				player.clearVideo();
-			}
-		
 			function onPlayerError(event) {
 			 	main.video_over();		
 			}     
@@ -59,37 +46,31 @@
 			    	console.log("ENDED");
 			 		main.video_over();
 			    } else if (event.data == YT.PlayerState.PLAYING) {
-			    	getCurrentTime();
-			    	getCurrentURL();
+			    	getCurrentInfo();
 			 		main.video_playing();
 			    } else if (event.data == YT.PlayerState.PAUSED) {
-			    	getCurrentTime();
-			    	getCurrentURL();
+			    	getCurrentInfo();
 			 		main.video_paused();
 			    } else if (event.data == YT.PlayerState.BUFFERING) {
-			    	getCurrentTime();
-			    	getCurrentURL();
+			    	getCurrentInfo();
 			 		main.video_buffering();
 			    } else if (event.data == YT.PlayerState.CUED) {
 			 		main.video_cued();
 			    }
 			}
 		
-			function stopVideo() {
-				player.stopVideo();
+			function getCurrentInfo() {
+				var time = player.getCurrentTime();
+				var url = player.getVideoUrl();
+
+				if (time){
+					main.get_current_time(time);
+				}
+				main.get_current_url(url);
 			}
-		
-			function seekTo(sec, seekAhead) {
-				player.seekTo(sec, seekAhead);
-			}
-		
-			function getCurrentTime() {
-				// console.log(player.getVideoUrl());
-				console.log(player.getCurrentTime());
-				main.curTime(player.getCurrentTime());
-			}
-			function getCurrentURL() {
-				main.curURL(player.getVideoUrl());
+
+			function getLoadedFraction() {
+				main.get_loaded_fraction(player.getVideoLoadedFraction());
 			}
 			
 		</script>

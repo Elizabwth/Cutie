@@ -7,9 +7,10 @@ class CallbackHandler:
         self.user_disconnected_listener = None
         self.video_added_listener = None
         self.video_removed_listener = None
-        self.sync_data_requested_listener = None
+        self.state_data_requested_listener = None
         self.message_received_listener = None
         self.queue_sorted_listener = None
+        self.state_data_changed_listener = None
 
     def set_user_connected_listener(self, listener):
         self.user_connected_listener = listener
@@ -23,14 +24,17 @@ class CallbackHandler:
     def set_video_removed_listener(self, listener):
         self.video_removed_listener = listener
 
-    def set_sync_data_requested_listener(self, listener):
-        self.sync_data_requested_listener = listener
+    def set_state_data_requested_listener(self, listener):
+        self.state_data_requested_listener = listener
 
     def set_message_received_listener(self, listener):
         self.message_received_listener = listener
 
     def set_queue_sorted_listener(self, listener):
         self.queue_sorted_listener = listener
+
+    def set_state_data_changed_listener(self, listener):
+    	self.state_data_changed_listener = listener
 
     @Pyro4.callback
     def user_connected(self, user):
@@ -57,12 +61,6 @@ class CallbackHandler:
             self.video_removed_listener(index)
 
     @Pyro4.callback
-    def sync_data_requested(self):
-        print("sync_data_requested callback")
-        if self.sync_data_requested_listener:
-            self.sync_data_requested_listener()
-
-    @Pyro4.callback
     def message_received(self, name, message):
         print("message_received callback")
         if self.message_received_listener:
@@ -73,6 +71,12 @@ class CallbackHandler:
         print("queue_sorted callback")
         if self.queue_sorted_listener:
             self.queue_sorted_listener(initial, dropped)
+
+    @Pyro4.callback
+    def state_data_changed(self):
+        print("sync_player callback")
+        if self.state_data_changed_listener:
+            self.state_data_changed_listener()
 
 class PlaybackHandler:
 	def __init__(self):

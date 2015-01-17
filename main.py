@@ -14,14 +14,14 @@ import threading
 import handler
 import adblocker
 
-from player import Player
+from player import Player, PlayerState
 from client import Client
 from utils import *
 
 class WebPage(QtWebKit.QWebPage):
     def javaScriptConsoleMessage(self, msg, line, source):
         # print '%s line %d: %s' % (source, line, msg)
-        # print 'js console, line %d: "%s"' % (line, msg)
+        print 'js console, line %d: "%s"' % (line, msg)
         pass
 
 class Main(QtGui.QMainWindow):
@@ -29,17 +29,15 @@ class Main(QtGui.QMainWindow):
         super(Main, self).__init__()
         self.ui = uic.loadUi('ui/main.ui', self)
         
-        self.player = Player()
-
         ### webView setup ###
         self.ui.webView.setPage(WebPage())
         adManager = adblocker.AdblockerNetworkManager()
         self.ui.webView.page().setNetworkAccessManager(adManager)
         self.ui.webView.settings().setAttribute(QtWebKit.QWebSettings.PluginsEnabled, True) 
         self.ui.webView.setUrl(QtCore.QUrl('res/docs/index.html'))
-        self.ui.webView.loadFinished.connect(self.webLoadFinished)
 
         ### queueList setup ###
+        self.ui.queueList.doubleClicked.connect(self.play_video_at_index)
         self.ui.queueList.setDragDropMode(QtGui.QAbstractItemView.InternalMove)
         self.ui.queueList.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.ui.queueList.customContextMenuRequested.connect(self.queue_context_menu)
@@ -48,7 +46,8 @@ class Main(QtGui.QMainWindow):
         ### videoInput setup ###
         self.ui.videoInput.returnPressed.connect(self.add_video)
 
-        ### skipButton setup ###
+        ### voteButton setup ###
+        self.ui.voteButton.clicked.connect(self.state_data_changed)
 
         ### userList setup ###
 
@@ -63,10 +62,16 @@ class Main(QtGui.QMainWindow):
         self.handler.set_user_disconnected_listener(self.user_disconnected)
         self.handler.set_video_added_listener(self.video_added)
         self.handler.set_video_removed_listener(self.video_removed)
-        self.handler.set_sync_data_requested_listener(self.sync_data_requested)
+        #self.handler.set_state_data_requested_listener(self.state_data_requested)
         self.handler.set_message_received_listener(self.message_received)
         self.handler.set_queue_sorted_listener(self.queue_sorted)
+        self.handler.set_state_data_changed_listener(self.state_data_changed)
 
+        ### Playback Handlers ###
+        self.player = Player(self.ui.webView)
+        self.player.set_on_state_change_listener(self.player_state_changed)
+
+        ### Daemon Thread ###
         daemon = Pyro4.core.Daemon()
         daemon.register(self.handler)
 
@@ -75,39 +80,77 @@ class Main(QtGui.QMainWindow):
         thread.start()
 
         ### initial setup ###
+        # this will eventually pull from an ini with previous settings
         self.user_name  = "Lizzy"
         self.user_group = "curator"
 
         self.dialog = None
         self.show_connect_dialog()
 
+        self.previous_state = -2
+
+    ### PLAYER ###
+    def play_video_at_index(self, item):
+        queue = self.proxy.get_queue()[:]
+        index = item.row()
+        qi = queue[index]
+        self.player.cue_video(qi['vid_id'])
+        self.player.play()
+
+    def player_state_changed(self, vid_id, time, state):
+        if self.user_group == "curator":
+            self.proxy.set_state_data(vid_id, time, state, 4)
+
+        print("id = {0}, time = {1}, state = {2}".format(vid_id, time, state))
+
+    def state_data_changed(self):
+        data = self.proxy.get_state_data()
+        state = data['state']
+        print data
+        
+        if state == PlayerState.PLAYING:
+            self.player.cue_video(data['vid_id'])
+            self.player.seek(data['time'])
+            self.player.play()
+        elif state == PlayerState.PAUSED:
+            self.player.seek(data['time'])
+            self.player.pause()
+        elif state == PlayerState.CUED:
+            self.player.cue_video(data['vid_id'])
+            self.player.seek(data['time'])
+
     ### SERVER CALLS ###
     def connect(self):
         ## RO Proxy ##
-        name           = str(self.dialog.ui.nameInput.text())
-        ip             = str(self.dialog.ui.addressInput.text())
-        port           = str(self.dialog.ui.portInput.text())
-        uri = "PYRO:cutie@{0}:{1}".format(ip, port) # PYRO:cutie@10.0.1.12:8080
+        name = str(self.dialog.ui.nameInput.text())
+        ip   = str(self.dialog.ui.addressInput.text())
+        port = str(self.dialog.ui.portInput.text())
+
+        uri  = "PYRO:cutie@{0}:{1}".format(ip, port) # PYRO:cutie@10.0.1.12:8080
         self.proxy = Pyro4.Proxy(uri)
 
-        for user in self.proxy.get_users():
+        users = self.proxy.get_users()[:]
+
+        for user in users:
             self.ui.userList.addItem(user['name'])
 
+        queue = self.proxy.get_queue()[:]
+        for qi in queue:
+            self.video_added(qi)
+
         unique = 0
-        for user in self.proxy.get_users():
+        for user in users:
             if self.user_name == user['name']:
                 unique += 1
-
+                self.user_name = name+" ({0})".format(unique)
         if unique == 0:
             self.user_name = name
-        else:
-            self.user_name = name + " ({0})".format(unique)
-        
-        self.proxy.connect_user(self.user_name, self.user_group, self.handler)
 
-        self.proxy.add_video("https://www.youtube.com/watch?v=VqB1uoDTdKM", self.user_name) # test
-        self.proxy.add_video("https://www.youtube.com/watch?v=EAdgI8LHPaU", self.user_name) # test
-        self.proxy.add_video("https://www.youtube.com/watch?v=VqB1uoDTdKM", self.user_name) # test
+        for user in users:
+            if user['group'] == "curator" and len(users) >= 1:
+                self.user_group = "regular"
+
+        self.proxy.connect_user(self.user_name, self.user_group, self.handler)
 
     def disconnect(self):
         self.proxy.disconnect_user(self.user_name)
@@ -122,9 +165,6 @@ class Main(QtGui.QMainWindow):
         text = text.replace('"', "&quot;") 
         self.proxy.broadcast_message(self.user_name, text)
         self.ui.chatInput.setText("")
-
-    def sync_data_with_curator(self, data):
-        pass
 
     ### CALLBACKS ###
     def user_connected(self, user):
@@ -159,13 +199,7 @@ class Main(QtGui.QMainWindow):
         self.ui.chatText.append("<b>"+name+":</b> "+message)
         self.ui.chatText.verticalScrollBar().setValue(self.ui.chatText.verticalScrollBar().maximum())
 
-    def sync_data_requested(self):
-        self.proxy.set_sync_data("", 0, 60, 0) # video id, state, time, queue index
-
     ### UI ###
-    def webLoadFinished(self):
-        self.ui.webView.page().mainFrame().addToJavaScriptWindowObject('main', self.player)
-
     def queue_drop_event(self, event):
         # get inital row of dragged item before continuing
         source        = event.source()
@@ -193,13 +227,14 @@ class Main(QtGui.QMainWindow):
         copyAction   = menu.addAction(cbicon, "Copy URL to clipboard")
         action       = menu.exec_(self.ui.queueList.mapToGlobal(position))
 
+        queue = self.proxy.get_queue()[:]
         item = self.ui.queueList.currentItem()
         item_index = self.ui.queueList.row(item)
         if action == removeAction:
             self.proxy.remove_video(item_index)
             del item
         elif action == copyAction:
-            qi = self.proxy.get_queue()[item_index]
+            qi = queue[item_index]
             clipboard = QtGui.QApplication.clipboard()
             clipboard.clear(mode = clipboard.Clipboard)
             clipboard.setText("http://youtu.be/"+qi['vid_id'], mode = clipboard.Clipboard)
