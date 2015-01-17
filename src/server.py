@@ -137,8 +137,7 @@ class Server:
 
         for user in self.users:
             if user['group'] != 'curator':
-                # user['callback_handler'].state_data_changed()
-                pass
+                user['callback_handler'].state_data_changed()
 
 def main():
     server = Server()

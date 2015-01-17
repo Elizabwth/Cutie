@@ -56,7 +56,7 @@ class YouTubeAPI(QtCore.QObject):
     def get_current_time(self, time):
         self.time = time
 
-    @QtCore.pyqtSlot(str)  
+    @QtCore.pyqtSlot(str)
     def get_current_url(self, url):
         self.vid_id = get_video_id(url)
 

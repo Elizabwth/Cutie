@@ -58,14 +58,14 @@ class Main(QtGui.QMainWindow):
 
         ### Callback Handler ###
         self.handler = handler.CallbackHandler()
-        self.handler.set_user_connected_listener(self.user_connected)
-        self.handler.set_user_disconnected_listener(self.user_disconnected)
-        self.handler.set_video_added_listener(self.video_added)
-        self.handler.set_video_removed_listener(self.video_removed)
-        #self.handler.set_state_data_requested_listener(self.state_data_requested)
-        self.handler.set_message_received_listener(self.message_received)
-        self.handler.set_queue_sorted_listener(self.queue_sorted)
-        self.handler.set_state_data_changed_listener(self.state_data_changed)
+        self.handler.user_connected_signal.connect(self.user_connected)
+        self.handler.user_disconnected_signal.connect(self.user_disconnected)
+        self.handler.video_added_signal.connect(self.video_added)
+        self.handler.video_removed_signal.connect(self.video_removed)
+        #self.handler.state_data_requested_signal.connect(self.state_data_requested)
+        self.handler.message_received_signal.connect(self.message_received)
+        self.handler.queue_sorted_signal.connect(self.queue_sorted)
+        self.handler.state_data_changed_signal.connect(self.state_data_changed)
 
         ### Playback Handlers ###
         self.player = Player(self.ui.webView)
