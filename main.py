@@ -21,7 +21,7 @@ from utils import *
 class WebPage(QtWebKit.QWebPage):
     def javaScriptConsoleMessage(self, msg, line, source):
         # print '%s line %d: %s' % (source, line, msg)
-        print 'js console, line %d: "%s"' % (line, msg)
+        # print 'js console, line %d: "%s"' % (line, msg)
         pass
 
 class Main(QtGui.QMainWindow):
@@ -151,7 +151,9 @@ class Main(QtGui.QMainWindow):
             if user['group'] == "curator" and len(users) >= 1:
                 self.user_group = "regular"
 
+        self.proxy._pyroOneway("connect_user")
         self.proxy.connect_user(self.user_name, self.user_group, self.handler)
+
 
     def disconnect(self):
         self.proxy.disconnect_user(self.user_name)
