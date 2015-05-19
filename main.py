@@ -11,12 +11,13 @@ sys.path.append(lib_path)
 
 import Pyro4
 import threading
-import handler
 import adblocker
 
 from player import Player, PlayerState
 from client import Client
 from utils import *
+
+from handler import CallbackHandler
 
 class WebPage(QtWebKit.QWebPage):
     def javaScriptConsoleMessage(self, msg, line, source):
@@ -47,7 +48,7 @@ class Main(QtGui.QMainWindow):
         self.ui.videoInput.returnPressed.connect(self.add_video)
 
         ### voteButton setup ###
-        self.ui.voteButton.clicked.connect(self.state_data_changed)
+        self.ui.voteButton.clicked.connect(self.player_state_changed)
 
         ### userList setup ###
 
@@ -56,28 +57,9 @@ class Main(QtGui.QMainWindow):
         ### chatInput setup ###
         self.ui.chatInput.returnPressed.connect(self.send_message)
 
-        ### Callback Handler ###
-        self.handler = handler.CallbackHandler()
-        self.handler.user_connected_signal.connect(self.user_connected)
-        self.handler.user_disconnected_signal.connect(self.user_disconnected)
-        self.handler.video_added_signal.connect(self.video_added)
-        self.handler.video_removed_signal.connect(self.video_removed)
-        #self.handler.state_data_requested_signal.connect(self.state_data_requested)
-        self.handler.message_received_signal.connect(self.message_received)
-        self.handler.queue_sorted_signal.connect(self.queue_sorted)
-        self.handler.state_data_changed_signal.connect(self.state_data_changed)
-
         ### Playback Handlers ###
         self.player = Player(self.ui.webView)
         self.player.set_on_state_change_listener(self.player_state_changed)
-
-        ### Daemon Thread ###
-        daemon = Pyro4.core.Daemon()
-        daemon.register(self.handler)
-
-        thread = threading.Thread(target=daemon.requestLoop)
-        thread.setDaemon(True)
-        thread.start()
 
         ### initial setup ###
         # this will eventually pull from an ini with previous settings
@@ -87,7 +69,21 @@ class Main(QtGui.QMainWindow):
         self.dialog = None
         self.show_connect_dialog()
 
-        self.previous_state = -2
+        self.local_users        = []
+        self.local_queue        = []
+        self.local_chat         = []
+        self.local_player_state = {}
+
+        self.daemon = Pyro4.core.Daemon()
+        self.callback = CallbackHandler()
+        self.callback.user_connected_signal.connect(self.user_connected)
+        self.callback.message_received_signal.connect(self.message_received)
+        self.daemon.register(self.callback)
+
+    def run(self):
+        def daemon_loop():
+            self.daemon.requestLoop()
+        threading.Thread(target=daemon_loop).start()
 
     ### PLAYER ###
     def play_video_at_index(self, item):
@@ -99,12 +95,12 @@ class Main(QtGui.QMainWindow):
 
     def player_state_changed(self, vid_id, time, state):
         if self.user_group == "curator":
-            self.proxy.set_state_data(vid_id, time, state, 4)
+            self.proxy.set_player_state(vid_id, time, state, 4)
 
         print("id = {0}, time = {1}, state = {2}".format(vid_id, time, state))
 
-    def state_data_changed(self):
-        data = self.proxy.get_state_data()
+    def player_state_changed(self):
+        data = self.proxy.get_player_state()
         state = data['state']
         print data
         
@@ -119,14 +115,16 @@ class Main(QtGui.QMainWindow):
             self.player.cue_video(data['vid_id'])
             self.player.seek(data['time'])
 
+    ####################
     ### SERVER CALLS ###
+    ####################
     def connect(self):
         ## RO Proxy ##
         name = str(self.dialog.ui.nameInput.text().toAscii())
         ip   = str(self.dialog.ui.addressInput.text().toAscii())
         port = str(self.dialog.ui.portInput.text().toAscii())
 
-        uri  = "PYRO:cutie@{0}:{1}".format(ip, port) # PYRO:cutie@10.0.1.12:8080
+        uri  = "PYRO:cutie@{0}:{1}".format(ip, port)
         self.proxy = Pyro4.Proxy(uri)
 
         users = self.proxy.get_users()[:]
@@ -138,7 +136,7 @@ class Main(QtGui.QMainWindow):
         for qi in queue:
             self.video_added(qi)
 
-        # give a connecting user a unique name
+        # ensure a connecting user has a unique name
         unique = 0
         for user in users:
             if self.user_name == user['name']:
@@ -151,9 +149,8 @@ class Main(QtGui.QMainWindow):
             if user['group'] == "curator" and len(users) >= 1:
                 self.user_group = "regular"
 
-        self.proxy._pyroOneway("connect_user")
-        self.proxy.connect_user(self.user_name, self.user_group, self.handler)
-
+        self.proxy._pyroOneway.add("connect_user")
+        self.proxy.connect_user(self.user_name, self.user_group, self.callback)
 
     def disconnect(self):
         self.proxy.disconnect_user(self.user_name)
@@ -166,10 +163,18 @@ class Main(QtGui.QMainWindow):
     def send_message(self):
         text = str(self.ui.chatInput.text().toAscii())
         text = text.replace('"', "&quot;") 
-        self.proxy.broadcast_message(self.user_name, text)
+        m = {}
+        m['name'] = self.user_name
+        m['message'] = text
+
+        self.proxy._pyroOneway.add("broadcast_message")
+        self.proxy.broadcast_message(m, self.callback)
+        
         self.ui.chatInput.setText("")
 
-    ### CALLBACKS ###
+    ################
+    ### HANDLERS ###
+    ################
     def user_connected(self, user):
         self.ui.userList.addItem(user['name'])
 
@@ -198,8 +203,8 @@ class Main(QtGui.QMainWindow):
             item = self.ui.queueList.takeItem(initial_row)
             self.ui.queueList.insertItem(dropped_row, item)
 
-    def message_received(self, name, message):
-        self.ui.chatText.append("<b>"+name+"</b>: "+message)
+    def message_received(self, m):
+        self.ui.chatText.append("<b>"+m['name']+"</b>: "+m['message'])
         self.ui.chatText.verticalScrollBar().setValue(self.ui.chatText.verticalScrollBar().maximum())
 
     ### UI ###
@@ -216,7 +221,7 @@ class Main(QtGui.QMainWindow):
             dropped_index = source.row(item)
             self.proxy.sort_queue(initial_index, dropped_index)
 
-            print "initial index = {0}, dropped index = {1}".format(str(initial_index), str(dropped_index))
+            print "initial: {0}, dropped: {1}".format(str(initial_index), str(dropped_index))
 
     def queue_context_menu(self, position):
         if len(self.ui.queueList) == 0: 
@@ -247,7 +252,7 @@ class Main(QtGui.QMainWindow):
         self.dialog.ui = uic.loadUi('ui/connectdialog.ui', self.dialog)
 
         self.dialog.ui.nameInput.setText("Lizzy") # debug
-        self.dialog.ui.addressInput.setText("10.0.1.12") # debug
+        self.dialog.ui.addressInput.setText("192.168.1.109") # debug 10.0.1.12
         self.dialog.ui.portInput.setText("8080")
 
         self.dialog.ui.okCancle.accepted.connect(self.connect)
@@ -269,13 +274,12 @@ class Main(QtGui.QMainWindow):
 
 if __name__ == '__main__':
     # allow taskbar to display icon
-    myappid = 'elizabwth.cutie' # arbitrary string
+    myappid = 'elizabwth.cutie'
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
     app = QtGui.QApplication(sys.argv)
-    #myapp = MainForm()
-    #myapp.show()
     myapp = Main()
     myapp.show()
+    myapp.run()
 
     sys.exit(app.exec_())

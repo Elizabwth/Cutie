@@ -11,7 +11,7 @@ class CallbackHandler(QtCore.QObject):
     video_removed_signal 		= QtCore.pyqtSignal(int)
 
     #state_data_requested_signal = QtCore.pyqtSignal()
-    message_received_signal 	= QtCore.pyqtSignal(str, str)
+    message_received_signal 	= QtCore.pyqtSignal(dict)
     queue_sorted_signal 		= QtCore.pyqtSignal(int, int)
     state_data_changed_signal 	= QtCore.pyqtSignal()
 
@@ -36,9 +36,9 @@ class CallbackHandler(QtCore.QObject):
         self.video_removed_signal.emit(index)
 
     @Pyro4.callback
-    def message_received(self, name, message):
+    def message_received(self, m):
         print("message_received signal")
-        self.message_received_signal.emit(name, message)
+        self.message_received_signal.emit(m)
 
     @Pyro4.callback
     def queue_sorted(self, initial, dropped):

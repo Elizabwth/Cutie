@@ -17,22 +17,24 @@ import Pyro4.core
 import Pyro4.naming
 import Pyro4.socketutil
 
-import logging
-
-logging.basicConfig(stream=sys.stderr, format="[%(asctime)s,%(name)s,%(levelname)s] %(message)s")
-log = logging.getLogger("Pyro4")
-log.setLevel(logging.WARNING)
+def _cull_chat(lines):
+    num_of_lines = len(lines)
+    max_lines = num_of_lines-100
+    if len(lines) > max_lines:
+        lines = lines[max_lines:len(lines)]
 
 class Server:
     def __init__(self):
         self.users = []
         self.queue = []
-        self.state_data = {}
+        self.chat = []
+        self.player_state = {}
 
     def run(self):
         def tick():
             while True:
                 time.sleep(1)
+                _cull_chat(self.chat)
 
         thread = threading.Thread(target=tick)
         thread.setDaemon(True)
@@ -44,28 +46,26 @@ class Server:
     def get_users(self):
         return self.users
 
-    def get_state_data(self):
-        return self.state_data
+    def get_chat(self):
+        return self.chat
+
+    def get_player_state(self):
+        return self.player_state
 
     @Pyro4.oneway
-    def broadcast_message(self, name, message):
-        for user in self.users:
-            user['callback_handler'].message_received(name, message)
+    def broadcast_message(self, message, callback):
+        self.chat.append(message)
+        callback.message_received(message)
 
-        print("<"+name+"> "+message)
+        print("<"+message['name']+"> "+message['message'])
 
     @Pyro4.oneway
-    def connect_user(self, name, group, callback_handler):
+    def connect_user(self, name, group, callback):
         u = {}
         u['name']  = name
         u['group'] = group
-        u['callback_handler'] = callback_handler
         self.users.append(u)
-
-        for user in self.users:
-            if user['group'] == "curator" and len(self.users) > 1:
-                u['group'] = "regular"
-            user['callback_handler'].user_connected(u)
+        callback.user_connected(u)
 
         print("User connected: "+u['name']+", "+u['group'])
 
@@ -79,10 +79,6 @@ class Server:
                 index = i
                 user_found = True
                 break
-        
-        if user_found:
-            for user in self.users:
-                user['callback_handler'].user_disconnected(index)
 
             print("User disconnect at index: "+str(index))
 
@@ -104,17 +100,11 @@ class Server:
         qi['added_by'] = user_name
         self.queue.append(qi)
 
-        for user in self.users:
-            user['callback_handler'].video_added(qi)
-
         print("Video added: "+qi['vid_id'])
 
     @Pyro4.oneway
     def remove_video(self, index):
         self.queue.pop(index)
-
-        for user in self.users:
-            user['callback_handler'].video_removed(index)
 
         print("Video removed at index: "+str(index))
 
@@ -122,22 +112,14 @@ class Server:
     def sort_queue(self, initial, dropped):
         self.queue[initial], self.queue[dropped] = self.queue[dropped], self.queue[initial]
 
-        for user in self.users:
-            if user['group'] != 'curator':
-                user['callback_handler'].queue_sorted(initial, dropped)
-
         print("Queue item sorted from row {0} to {1}".format(initial, dropped))
 
     @Pyro4.oneway
-    def set_state_data(self, vid_id, time, state, queue_index):
-        self.state_data['vid_id']      = vid_id
-        self.state_data['time']        = time
-        self.state_data['state']       = state
-        self.state_data['queue_index'] = queue_index
-
-        for user in self.users:
-            if user['group'] != 'curator':
-                user['callback_handler'].state_data_changed()
+    def set_player_state(self, vid_id, time, state, queue_index):
+        self.player_state['vid_id']      = vid_id
+        self.player_state['time']        = time
+        self.player_state['state']       = state
+        self.player_state['queue_index'] = queue_index
 
 def main():
     server = Server()
