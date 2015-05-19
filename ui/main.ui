@@ -151,6 +151,9 @@ p, li { white-space: pre-wrap; }
     <property name="text">
      <string/>
     </property>
+    <property name="maxLength">
+     <number>140</number>
+    </property>
     <property name="placeholderText">
      <string> Message</string>
     </property>
