@@ -12,16 +12,19 @@ import socket
 import sys
 import time
 import threading
+import uuid
 
 import Pyro4.core
 import Pyro4.naming
 import Pyro4.socketutil
+
 
 def _cull_chat(lines):
     num_of_lines = len(lines)
     max_lines = num_of_lines-100
     if len(lines) > max_lines:
         lines = lines[max_lines:len(lines)]
+
 
 class Server:
     def __init__(self):
@@ -55,32 +58,35 @@ class Server:
     @Pyro4.oneway
     def broadcast_message(self, message, callback):
         self.chat.append(message)
-        callback.message_received(message)
+
+        for user in self.users:
+            user['callback'].message_received(message)
 
         print("<"+message['name']+"> "+message['message'])
 
     @Pyro4.oneway
-    def connect_user(self, name, group, callback):
+    def connect_user(self, name, callback):
         u = {}
-        u['name']  = name
-        u['group'] = group
+        u['name']     = name
+        u['callback'] = callback
+        u['uid']      = str(uuid.uuid4())[:8]
         self.users.append(u)
-        callback.user_connected(u)
 
-        print("User connected: "+u['name']+", "+u['group'])
+        for user in self.users:
+            user['callback'].user_connected(u)
+
+        print("<Connnection> NAME: '"+u['name']+"' UID: "+u['uid'])
 
     @Pyro4.oneway
-    def disconnect_user(self, name):
+    def disconnect_user(self, uid):
         index = 0
-        user_found = False
         for i, user in enumerate(self.users):
-            if user['name'] == name:
+            if user['uid'] == uid:
                 self.users.remove(user)
                 index = i
-                user_found = True
                 break
 
-            print("User disconnect at index: "+str(index))
+            print("<Disconnect> NAME: '"+user['name']+"' UID: "+user['uid']+" INDEX: "+index)
 
     @Pyro4.oneway
     def add_video(self, url, user_name):
@@ -121,6 +127,7 @@ class Server:
         self.player_state['state']       = state
         self.player_state['queue_index'] = queue_index
 
+
 def main():
     server = Server()
 
@@ -128,7 +135,7 @@ def main():
     server_uri = daemon.register(server, "cutie")
 
     server.run()
-    print("Server running, uri = "+str(server_uri))
+    print("<Server Started> URI: "+str(server_uri))
     daemon.requestLoop()
 
 if __name__ == '__main__':
